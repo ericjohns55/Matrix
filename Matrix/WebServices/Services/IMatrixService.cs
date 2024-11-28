@@ -1,10 +1,11 @@
-using Matrix.DataModels;
+using Matrix.Data.Models;
 
 namespace Matrix.WebServices.Services;
 
 public interface IMatrixService
 {
-    public string? GetTestData();
-    public void SetData(string data);
-    public Task<List<TestData>>  GetTestDataList();
+    // public TestData GetTestData();
+    // public void SetData(string data);
+    // public Task<List<TestData>>  GetTestDataList();
+    // public Task AddTestDataAsync(TestData testData);
 }

@@ -5,11 +5,14 @@ namespace Matrix.WebServices;
 
 public static class MatrixServer
 {
-    private static readonly bool SEED_DATA = true;
-    
-    public static async Task<WebApplication> CreateWebServer(string[] args)
+    public static async Task<WebApplication> CreateWebServer(string[] args, IConfigurationRoot configuration)
     {
-        // TODO configuration builder
+        string dataPath = Path.Combine(Environment.CurrentDirectory, "data", "matrix.db");
+        if (!string.IsNullOrWhiteSpace(configuration["DatabasePath"]))
+        {
+            dataPath = configuration["DatabasePath"]!;
+        }
+        
         var builder = WebApplication.CreateBuilder(args);
         var services = builder.Services;
 
@@ -20,10 +23,10 @@ public static class MatrixServer
         services.AddMvc();
 
         services.AddScoped<IMatrixService, MatrixService>();
+        services.AddScoped<IClockFaceService, ClockFaceService>();
         
-        // TODO move matrix.db into Data and move DataModels to Data/Models
         services.AddDbContext<MatrixContext>(options =>
-            options.UseSqlite("Data Source=matrix.db"));
+            options.UseSqlite($"Data Source={dataPath}"));
 
         var app = builder.Build();
 
@@ -39,10 +42,10 @@ public static class MatrixServer
             var context = scope.ServiceProvider.GetRequiredService<MatrixContext>();
             await context.Database.EnsureCreatedAsync();
 
-            if (SEED_DATA)
+            if (configuration.GetValue<bool>("Seed:RunOnStartup"))
             {
                 MatrixSeeder seeder = new MatrixSeeder(context);
-                await seeder.Seed(false);
+                await seeder.Seed(configuration.GetValue<bool>("Seed:Drop"));
             }
         }
 

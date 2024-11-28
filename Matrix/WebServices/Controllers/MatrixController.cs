@@ -1,6 +1,7 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Matrix.WebServices.Services;
-using Matrix.DataModels;
+using Matrix.Data.Models;
 
 namespace Matrix.WebServices.Controllers;
 
@@ -20,22 +21,25 @@ public class MatrixController  : Controller
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     public IActionResult GetTestData()
     {
-        _logger.LogInformation("GetTestData");
-        return Ok(_matrixService.GetTestData());
+        // _logger.LogInformation("GetTestData");
+        // return Ok(_matrixService.GetTestData());
+        return Ok();
     }
 
     [HttpPost("test")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult PostTestData([FromBody] TestData testData)
     {
-        _matrixService.SetData(testData.Data);
-        return Ok("Success");
+        // _matrixService.AddTestDataAsync(testData);
+        // return Ok(testData);
+        return Ok();
     }
 
     [HttpGet("list")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<TestData>))]
     public IActionResult GetTestDataList()
     {
-        return Ok(_matrixService.GetTestDataList());
+        return Ok();
+        // return Ok(_matrixService.GetTestDataList());
     }
 }

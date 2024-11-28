@@ -1,4 +1,4 @@
-namespace Matrix.DataModels;
+namespace Matrix.Data.Models;
 
 public class TestData
 {

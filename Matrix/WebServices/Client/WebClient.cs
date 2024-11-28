@@ -5,12 +5,12 @@ using System.Text.Json.Serialization;
 using System.Web;
 using Matrix.Utilities;
 
-namespace Matrix.WebServices;
+namespace Matrix.WebServices.Client;
 
-public class WebClient
+public class WebClient : IDisposable
 {
     private ILogger<WebClient> _logger { get; }
-    private HttpClient _httpClient;
+    private readonly HttpClient _httpClient;
 
     public WebClient()
     {
@@ -18,14 +18,12 @@ public class WebClient
         _httpClient = new HttpClient();
     }
     
-    protected readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions()
+    private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions()
     {
         DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Converters = { new JsonStringEnumConverter() }
     };
-
-    protected HttpClient GetClient() => _httpClient;
     
     protected Uri BuildUri(Uri uri, NameValueCollection? queryString = null)
     {
@@ -44,7 +42,7 @@ public class WebClient
     protected async Task<T> ExecuteRequest<T>(Func<HttpClient, Task<HttpResponseMessage>> executeFunction,
         Func<HttpResponseMessage, Task<T>> resultFunction)
     {
-        HttpResponseMessage? response = null;
+        HttpResponseMessage? response;
 
         try
         {
@@ -53,21 +51,18 @@ public class WebClient
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
+            throw;
         }
 
         try
         {
-            if (response != null)
-            {
-                return await resultFunction(response);
-            }
+            return await resultFunction(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
+            throw;
         }
-
-        return null;
     }
 
     protected HttpContent SerializeHttpContent<T>(T value)
@@ -75,21 +70,24 @@ public class WebClient
         return new StringContent(JsonSerializer.Serialize(value, _jsonOptions), Encoding.UTF8, "application/json");
     }
 
-    protected Task<T> DeserializeHttpContent<T>(HttpResponseMessage response)
+    private Task<T> DeserializeHttpContent<T>(HttpResponseMessage response)
     {
         return response.Content.ReadAsByteArrayAsync().OnSuccess(responseBytes => (T) JsonSerializer.Deserialize<T>(responseBytes, _jsonOptions));
     }
 
     protected async Task<T> HandleJsonResponse<T>(HttpResponseMessage response)
     {
-        if (response.IsSuccessStatusCode)
-        {
-            return await DeserializeHttpContent<T>(response);
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             var content = await response.Content.ReadAsStringAsync();
-            
+            throw new WebException((int) response.StatusCode, content);
         }
+        
+        return await DeserializeHttpContent<T>(response);
+    }
+
+    public void Dispose()
+    {
+        _httpClient.Dispose();
     }
 }

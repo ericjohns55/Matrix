@@ -1,7 +1,18 @@
 namespace Matrix.Utilities;
 
-public static class TaskExtensions
+public static class WebExtensions
 {
+    public static Uri AddToPath(this Uri uri, params string[] values)
+    {
+        if (values.Length == 0)
+        {
+            return uri;
+        }
+        
+        string addition = string.Join('/', values);
+        return new Uri(uri, addition);
+    }
+    
     private static void CheckTaskSuccess(
         Task task,
         Action<Exception>? errorFunction,
@@ -50,7 +61,7 @@ public static class TaskExtensions
         {
             if (CheckTaskFailure(task))
             {
-                return onFailureFunction(t.Exception);
+                return onFailureFunction(t.Exception?.GetBaseException());
             }
 
             return task.Result;
