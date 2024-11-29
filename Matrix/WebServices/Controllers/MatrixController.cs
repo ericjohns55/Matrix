@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Matrix.Data;
 using Microsoft.AspNetCore.Mvc;
 using Matrix.WebServices.Services;
 using Matrix.Data.Models;
@@ -15,6 +16,14 @@ public class MatrixController  : Controller
     {
         _logger = logger;
         _matrixService = matrixService;
+    }
+
+    [HttpPost("update")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+    public IActionResult SendUpdate()
+    {
+        ProgramState.Update = !ProgramState.Update;
+        return Ok(ProgramState.Update);
     }
 
     [HttpGet("test")]

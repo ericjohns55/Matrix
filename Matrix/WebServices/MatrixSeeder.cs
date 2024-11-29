@@ -26,6 +26,7 @@ public class MatrixSeeder
             _matrixContext.MatrixFont.RemoveRange(_matrixContext.MatrixFont);
             _matrixContext.MatrixColor.RemoveRange(_matrixContext.MatrixColor);
             _matrixContext.TimePeriod.RemoveRange(_matrixContext.TimePeriod);
+            _matrixContext.Timer.RemoveRange(_matrixContext.Timer);
             
             await _matrixContext.SaveChangesAsync();
             _logger.LogInformation("Drop complete.");
