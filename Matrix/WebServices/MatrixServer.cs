@@ -1,3 +1,4 @@
+using Matrix.Data;
 using Matrix.WebServices.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,9 +9,9 @@ public static class MatrixServer
     public static async Task<WebApplication> CreateWebServer(string[] args, IConfigurationRoot configuration)
     {
         string dataPath = Path.Combine(Environment.CurrentDirectory, "data", "matrix.db");
-        if (!string.IsNullOrWhiteSpace(configuration["DatabasePath"]))
+        if (!string.IsNullOrWhiteSpace(configuration[ConfigConstants.DatabasePath]))
         {
-            dataPath = configuration["DatabasePath"]!;
+            dataPath = configuration[ConfigConstants.DatabasePath]!;
         }
         
         var builder = WebApplication.CreateBuilder(args);
@@ -29,7 +30,7 @@ public static class MatrixServer
             options.UseSqlite($"Data Source={dataPath}"));
 
         var app = builder.Build();
-
+        
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -42,10 +43,10 @@ public static class MatrixServer
             var context = scope.ServiceProvider.GetRequiredService<MatrixContext>();
             await context.Database.EnsureCreatedAsync();
 
-            if (configuration.GetValue<bool>("Seed:RunOnStartup"))
+            if (configuration.GetValue<bool>(ConfigConstants.RunSeedOnStart))
             {
                 MatrixSeeder seeder = new MatrixSeeder(context);
-                await seeder.Seed(configuration.GetValue<bool>("Seed:Drop"));
+                await seeder.Seed(configuration.GetValue<bool>(ConfigConstants.SeedDrop));
             }
         }
 

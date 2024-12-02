@@ -5,5 +5,6 @@
     "RunOnStartup": false,
     "Drop": true
   },
-  "UpdateInterval": 250
+  "UpdateInterval": 250,
+  "TimerBlinkCount": 3
 }

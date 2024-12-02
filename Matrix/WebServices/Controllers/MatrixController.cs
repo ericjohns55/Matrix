@@ -22,8 +22,8 @@ public class MatrixController  : Controller
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     public IActionResult SendUpdate()
     {
-        ProgramState.Update = !ProgramState.Update;
-        return Ok(ProgramState.Update);
+        ProgramState.UpdateNextTick = !ProgramState.UpdateNextTick;
+        return Ok(ProgramState.UpdateNextTick);
     }
 
     [HttpGet("test")]

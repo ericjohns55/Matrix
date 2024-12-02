@@ -6,4 +6,6 @@ public class ClockFace
     public string Name { get; init; }
     public List<TextLine> TextLines { get; init; }
     public List<TimePeriod> TimePeriods { get; init; }
+
+    public bool UpdatesEverySecond => false;
 }

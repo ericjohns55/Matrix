@@ -25,10 +25,25 @@ public class TimerController : Controller
     {
         ProgramState.PreviousState = ProgramState.State;
         ProgramState.State = MatrixState.Timer;
-        ProgramState.Timer = timer;
-        ProgramState.Update = true;
-        ProgramState.Timer.Start();
+        ProgramState.Timer = new MatrixTimer(timer);
+        ProgramState.UpdateNextTick = true;
         
+        return Ok("Success");
+    }
+
+    [HttpPost]
+    [Route("start")]
+    public IActionResult StartTimer()
+    {
+        ProgramState.Timer?.Start();
+        return Ok("Success");
+    }
+
+    [HttpPost]
+    [Route("stop")]
+    public IActionResult StopTimer()
+    {
+        ProgramState.Timer?.Cancel();
         return Ok("Success");
     }
 }

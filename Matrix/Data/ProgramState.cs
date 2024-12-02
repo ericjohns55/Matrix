@@ -1,29 +1,32 @@
+using Matrix.Data.Models;
 using Matrix.Data.Types;
-using Timer = Matrix.Data.Models.Timer;
 
 namespace Matrix.Data;
 
 public class ProgramState
 {
     public static MatrixState State { get; set; } = MatrixState.Clock;
-    public static MatrixState PreviousState { get; set; } = MatrixState.Unknown;
-    public static bool Update { get; set; } = true;
+    public static MatrixState PreviousState { get; set; } = MatrixState.Clock;
+    public static bool UpdateNextTick { get; set; } = true;
     
-    public static Timer Timer { get; set; }
+    public static MatrixTimer? Timer { get; set; }   
 
-    public static bool NeedsUpdate(DateTime now)
+    public static bool NeedsUpdate(DateTime now, ClockFace? currentClockFace)
     {
-        if (Update)
+        if (UpdateNextTick)
         {
             return true;
         }
 
-        if (State == MatrixState.Clock && now.Second == 0)
+        if (State == MatrixState.Clock)
         {
-            return true;
+            if (now.Second == 0 || (currentClockFace != null && currentClockFace.UpdatesEverySecond))
+            {
+                return true;
+            }
         }
 
-        if (State == MatrixState.Timer)
+        if (State == MatrixState.Timer && (Timer != null && Timer.NeedsScreenUpdate()))
         {
             return true;
         }
@@ -32,7 +35,6 @@ public class ProgramState
         {
             return true;
         }
-
 
         return false;
     }
