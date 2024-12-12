@@ -7,5 +7,5 @@ public class ClockFace
     public List<TextLine> TextLines { get; init; }
     public List<TimePeriod> TimePeriods { get; init; }
 
-    public bool UpdatesEverySecond => false;
+    public bool UpdatesEverySecond => true;
 }

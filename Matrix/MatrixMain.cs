@@ -1,15 +1,18 @@
 using Matrix.Data.Exceptions;
 using Matrix.Display;
 using Matrix.WebServices;
+using RPiRgbLEDMatrix;
 
 namespace Matrix;
 
 public class MatrixMain
 {
+    private static bool _matrixLoopRunning = true;
+    
     public static async Task Main(string[] args)
     {
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Environment.CurrentDirectory, "data"))
+            .SetBasePath(Path.Combine(Environment.CurrentDirectory, "Data"))
             .AddJsonFile("matrix_settings.json")
             .Build();
 
@@ -24,6 +27,12 @@ public class MatrixMain
             return;
         }
 
+        Console.CancelKeyPress += (_, eventArgs) =>
+        {
+            _matrixLoopRunning = false;
+            eventArgs.Cancel = true;
+        };
+        
         WebApplication webApp = await MatrixServer.CreateWebServer(args, configuration);
         Thread thread = new Thread(webApp.Run);
         thread.Start();
@@ -31,7 +40,7 @@ public class MatrixMain
         using (matrixUpdater)
         {
             int previousSecond = -1;
-            while (true)
+            while (_matrixLoopRunning)
             {
                 var time = DateTime.Now;
                 if (previousSecond != time.Second)

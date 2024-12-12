@@ -6,5 +6,18 @@
     "Drop": true
   },
   "UpdateInterval": 250,
-  "TimerBlinkCount": 3
+  "TimerBlinkCount": 3,
+  "WeatherUrl": "",
+  "FontsFolder": "/home/pi/rpi-rgb-led-matrix/fonts",
+  "MatrixOptions": {
+    "HardwareMapping": "adafruit-hat-pwm",
+    "Rows": 64,
+    "Columns": 64,
+    "ChainLength": 1,
+    "Parallel": 1,
+    "Brightness": 50,
+    "LimitRefreshRateHz": 0,
+    "DisableHardwarePulsing": true,
+    "GpioSlowdown": 3
+  }
 }

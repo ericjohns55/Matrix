@@ -8,7 +8,7 @@ public static class MatrixServer
 {
     public static async Task<WebApplication> CreateWebServer(string[] args, IConfigurationRoot configuration)
     {
-        string dataPath = Path.Combine(Environment.CurrentDirectory, "data", "matrix.db");
+        string dataPath = Path.Combine(Environment.CurrentDirectory, "Data", "matrix.db");
         if (!string.IsNullOrWhiteSpace(configuration[ConfigConstants.DatabasePath]))
         {
             dataPath = configuration[ConfigConstants.DatabasePath]!;
