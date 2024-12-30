@@ -4,6 +4,7 @@ using Matrix.Data.Models;
 using Matrix.Data.Types;
 using Matrix.WebServices;
 using RPiRgbLEDMatrix;
+
 using Color = System.Drawing.Color;
 
 namespace Matrix.Display;
@@ -17,9 +18,12 @@ public class MatrixUpdater : IDisposable
     private readonly int _timerBlinkCount;
     private readonly string _fontsPath;
     private readonly string _weatherUrl;
+    private readonly string _serverUrl;
 
     private readonly RGBLedMatrix _matrix;
     private readonly RGBLedCanvas _offscreenCanvas;
+
+    private readonly RGBLedFont _font;
 
     public MatrixUpdater(IConfiguration matrixSettings)
     {
@@ -38,7 +42,8 @@ public class MatrixUpdater : IDisposable
         var baseUrl = matrixSettings[ConfigConstants.ServerUrl];
         if (!string.IsNullOrWhiteSpace(baseUrl))
         {
-            _client = new MatrixClient(baseUrl);
+            _serverUrl = baseUrl;
+            _client = new MatrixClient(_serverUrl);
         }
 
         if (!string.IsNullOrWhiteSpace(matrixSettings[ConfigConstants.WeatherUrl]))
@@ -46,9 +51,12 @@ public class MatrixUpdater : IDisposable
             _weatherUrl = matrixSettings[ConfigConstants.WeatherUrl]!;
         }
 
-        if (!string.IsNullOrWhiteSpace(matrixSettings[ConfigConstants.WeatherUrl]))
+        if (!string.IsNullOrWhiteSpace(matrixSettings[ConfigConstants.FontsFolder]))
         {
             _fontsPath = matrixSettings[ConfigConstants.FontsFolder]!;
+            
+            var fontPath = Path.Combine(_fontsPath, "6x12.bdf");
+            _font = new RGBLedFont(fontPath);
         }
 
         try
@@ -77,6 +85,10 @@ public class MatrixUpdater : IDisposable
 
     public int GetUpdateInterval() => _updateInterval;
 
+    public string GetServerUrl() => _serverUrl;
+    
+    public string GetWeatherUrl() => _weatherUrl;
+
     public void HandleUpdateLoop(DateTime now)
     {
         if (!ProgramState.NeedsUpdate(now, ClockFace))
@@ -85,6 +97,8 @@ public class MatrixUpdater : IDisposable
         }
 
         ProgramState.UpdateNextTick = false;
+        
+        _offscreenCanvas.Clear();
         
         switch (ProgramState.State)
         {
@@ -105,7 +119,6 @@ public class MatrixUpdater : IDisposable
         }
 
         _matrix.SwapOnVsync(_offscreenCanvas);
-        _offscreenCanvas.Clear();
     }
     
     public void UpdateTimer()
@@ -132,9 +145,8 @@ public class MatrixUpdater : IDisposable
 
     public void UpdateClock(DateTime time)
     {
-        RGBLedFont font = new RGBLedFont(Path.Combine(_fontsPath, "6x12.bdf"));
         var color = new RPiRgbLEDMatrix.Color(128, 0, 0);
-        _offscreenCanvas.DrawText(font, 10, 10, color, DateTime.Now.ToString("HH:mm:ss"));
+        _offscreenCanvas.DrawText(_font, 10, 10, color, DateTime.Now.ToString("HH:mm:ss"));
         
         // TODO: check for clock face changes
         Console.WriteLine(VariableUtility.ParseTime(time));

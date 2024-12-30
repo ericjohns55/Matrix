@@ -26,8 +26,10 @@ public static class MatrixServer
         services.AddScoped<IMatrixService, MatrixService>();
         services.AddScoped<IClockFaceService, ClockFaceService>();
         
+        services.AddSingleton<IConfiguration>(configuration);
+        
         services.AddDbContext<MatrixContext>(options =>
-            options.UseSqlite($"Data Source={dataPath}"));
+            options.UseSqlite($"Data Source={dataPath};Mode=ReadWriteCreate"));
 
         var app = builder.Build();
         

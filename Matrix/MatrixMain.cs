@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Matrix.Data.Exceptions;
 using Matrix.Display;
 using Matrix.WebServices;
@@ -7,6 +8,8 @@ namespace Matrix;
 
 public class MatrixMain
 {
+    public static MatrixUpdater MatrixUpdater;
+    
     private static bool _matrixLoopRunning = true;
     
     public static async Task Main(string[] args)
@@ -16,10 +19,9 @@ public class MatrixMain
             .AddJsonFile("matrix_settings.json")
             .Build();
 
-        MatrixUpdater matrixUpdater;
         try
         {
-            matrixUpdater = new MatrixUpdater(configuration);
+            MatrixUpdater = new MatrixUpdater(configuration);
         }
         catch (ConfigurationException ex)
         {
@@ -34,10 +36,10 @@ public class MatrixMain
         };
         
         WebApplication webApp = await MatrixServer.CreateWebServer(args, configuration);
-        Thread thread = new Thread(webApp.Run);
+        Thread thread = new Thread(() => webApp.Run(MatrixUpdater.GetServerUrl()));
         thread.Start();
-
-        using (matrixUpdater)
+        
+        using (MatrixUpdater)
         {
             int previousSecond = -1;
             while (_matrixLoopRunning)
@@ -47,10 +49,13 @@ public class MatrixMain
                 {
                     previousSecond = time.Second;
 
-                    matrixUpdater.HandleUpdateLoop(time);
+                    var watch = Stopwatch.StartNew();
+                    MatrixUpdater.HandleUpdateLoop(time);
+                    watch.Stop();
+                    Console.WriteLine($"Time elapsed: {watch.ElapsedMilliseconds} ms");
                 }
         
-                Thread.Sleep(matrixUpdater.GetUpdateInterval());
+                Thread.Sleep(MatrixUpdater.GetUpdateInterval());
             }
         }
     }

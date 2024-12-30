@@ -19,7 +19,7 @@
 
     <ItemGroup>
       <Reference Include="RPiRgbLEDMatrix">
-        <HintPath>..\..\RPiRgbLEDMatrix.dll</HintPath>
+        <HintPath>..\..\RPiRgbLEDMatrix\RPiRgbLEDMatrix.dll</HintPath>
       </Reference>
     </ItemGroup>
 
