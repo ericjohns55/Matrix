@@ -1,6 +1,7 @@
 using Matrix.Data;
 using Matrix.Data.Models;
 using Matrix.Data.Types;
+using Matrix.WebServices.Authentication;
 using Matrix.WebServices.Services;
 using Microsoft.AspNetCore.Mvc;
 using Timer = Matrix.Data.Models.Timer;
@@ -8,6 +9,7 @@ using Timer = Matrix.Data.Models.Timer;
 namespace Matrix.WebServices.Controllers;
 
 [Route("timers")]
+[ApiKeyAuthFilter]
 public class TimerController : Controller
 {
     private readonly ILogger<TimerController> _logger;

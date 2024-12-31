@@ -4,8 +4,7 @@ namespace Matrix.WebServices.Services;
 
 public interface IMatrixService
 {
-    // public TestData GetTestData();
-    // public void SetData(string data);
-    // public Task<List<TestData>>  GetTestDataList();
-    // public Task AddTestDataAsync(TestData testData);
+    public ClockFace AddNewClockFace(ClockFace newClockFace);
+    public ClockFace GetClockFace(string name);
+    public string DeleteClockFace(string name);
 }

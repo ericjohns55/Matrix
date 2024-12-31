@@ -5,7 +5,6 @@ namespace Matrix.WebServices.Services;
 
 public class MatrixService : IMatrixService
 {
-    private static string? _data;
     private MatrixContext _matrixContext;
     
     public MatrixService(MatrixContext context)
@@ -13,17 +12,18 @@ public class MatrixService : IMatrixService
         _matrixContext = context;
     }
 
-    public TestData GetTestData() => new TestData() { Data = _data};
-    
-    public void SetData(string data) => _data = data;
+    public ClockFace AddNewClockFace(ClockFace newClockFace)
+    {
+        return new ClockFace();
+    }
 
-    // public async Task<List<TestData>> GetTestDataList()
-    // {
-    //     return new List<TestData>();
-    // }
-    //
-    // public async Task AddTestDataAsync(TestData testData)
-    // {
-    //     return Task.CompletedTask;
-    // }
+    public ClockFace GetClockFace(string name)
+    {
+        return new ClockFace();
+    }
+
+    public string DeleteClockFace(string name)
+    {
+        return string.Empty;
+    }
 }

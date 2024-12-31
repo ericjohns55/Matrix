@@ -33,18 +33,17 @@ public class MatrixSeeder
         }
         
         _logger.LogInformation("Seeding matrix colors ...");
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "red", Red = 128, Green = 0, Blue = 0 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "orange", Red = 253, Green = 88, Blue = 0 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "yellow", Red = 255, Green = 228, Blue = 0 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "green", Red = 0, Green = 160, Blue = 0 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "blue", Red = 0, Green = 64, Blue = 255 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "purple", Red = 128, Green = 0, Blue = 128 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "pink", Red = 255, Green = 0, Blue = 255 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "white", Red = 255, Green = 255, Blue = 255 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "gray", Red = 128, Green = 128, Blue = 128 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "black", Red = 0, Green = 0, Blue = 0 });
-        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "brown", Red = 101, Green = 67, Blue = 33 });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "red", Red = 128, Green = 0, Blue = 0, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "orange", Red = 253, Green = 88, Blue = 0, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "yellow", Red = 255, Green = 228, Blue = 0, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "green", Red = 0, Green = 160, Blue = 0, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "blue", Red = 0, Green = 64, Blue = 255, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "purple", Red = 128, Green = 0, Blue = 128, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "pink", Red = 255, Green = 0, Blue = 255, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "white", Red = 255, Green = 255, Blue = 255, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "gray", Red = 128, Green = 128, Blue = 128, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "black", Red = 0, Green = 0, Blue = 0, Deleted = false });
+        _matrixContext.MatrixColor.Add(new MatrixColor() { Name = "brown", Red = 101, Green = 67, Blue = 33, Deleted = false });
         await _matrixContext.SaveChangesAsync();
-        
     }
 }

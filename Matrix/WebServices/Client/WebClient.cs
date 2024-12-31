@@ -16,6 +16,10 @@ public class WebClient : IDisposable
     {
         _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<WebClient>();
         _httpClient = new HttpClient();
+        
+        var encodedKey = Encoding.UTF8.GetBytes(MatrixServer.ApiKey);
+        var base64Key = Convert.ToBase64String(encodedKey);
+        _httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {base64Key}");
     }
     
     private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions()

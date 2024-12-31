@@ -13,14 +13,14 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
     </ItemGroup>
     
-    <ItemGroup>
-        <ProjectReference Include="..\..\RPiRgbLEDMatrix.csproj" />
-    </ItemGroup>
+<!--    <ItemGroup>-->
+<!--        <ProjectReference Include="..\..\RPiRgbLEDMatrix.csproj" />-->
+<!--    </ItemGroup>-->
 
-    <ItemGroup>
-      <Reference Include="RPiRgbLEDMatrix">
-        <HintPath>..\..\RPiRgbLEDMatrix\RPiRgbLEDMatrix.dll</HintPath>
-      </Reference>
-    </ItemGroup>
+<!--    <ItemGroup>-->
+<!--      <Reference Include="RPiRgbLEDMatrix">-->
+<!--        <HintPath>..\..\RPiRgbLEDMatrix\RPiRgbLEDMatrix.dll</HintPath>-->
+<!--      </Reference>-->
+<!--    </ItemGroup>-->
 
 </Project>

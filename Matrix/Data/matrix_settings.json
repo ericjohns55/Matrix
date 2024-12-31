@@ -2,7 +2,7 @@
   "ServerUrl": "http://localhost:5000",
   "DatabasePath": null,
   "Seed": {
-    "RunOnStartup": false,
+    "RunOnStartup": true,
     "Drop": true
   },
   "UpdateInterval": 250,

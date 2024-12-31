@@ -1,4 +1,5 @@
 using Matrix.Data.Models;
+using Matrix.Data.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matrix.WebServices.Services;
@@ -11,47 +12,52 @@ public class ClockFaceService : IClockFaceService
     {
         _matrixContext = matrixContext;
     }
-
-    public Task<List<MatrixColor>> GetMatrixColors()
+    
+    public Task<List<ClockFace>> GetAllClockFaces(SearchFilter filter = SearchFilter.Active)
     {
-        return _matrixContext.MatrixColor.ToListAsync();
-    }
-
-    public Task<MatrixColor?> GetMatrixColor(int colorId)
-    {
-        return _matrixContext.MatrixColor.FirstOrDefaultAsync(color => color.Id == colorId);
-    }
-
-    public Task<MatrixColor?> GetMatrixColor(string colorName)
-    {
-        return _matrixContext.MatrixColor.FirstOrDefaultAsync(color => color.Name == colorName);
-    }
-
-    public async Task<MatrixColor?> UpdateMatrixColor(int colorId, MatrixColor color)
-    {
-        _matrixContext.MatrixColor.Update(color);
-        await _matrixContext.SaveChangesAsync();
-        return await GetMatrixColor(colorId);
-    }
-
-    public async Task<MatrixColor?> AddMatrixColor(MatrixColor color)
-    {
-        await _matrixContext.MatrixColor.AddAsync(color);
-        await _matrixContext.SaveChangesAsync();
-        
-        return await _matrixContext.MatrixColor.FirstOrDefaultAsync(c => c.Name == color.Name);
-    }
-
-    public async Task<int> RemoveMatrixColor(int colorId)
-    {
-        MatrixColor? color = await GetMatrixColor(colorId);
-        
-        if (color != null)
+        if (filter == SearchFilter.AllResults)
         {
-            _matrixContext.MatrixColor.Remove(color);
+            return _matrixContext.ClockFace.ToListAsync();
         }
         
+        var searchForDeleted = filter == SearchFilter.Deleted;
+
+        return _matrixContext.ClockFace.Where(face => face.Deleted == searchForDeleted).ToListAsync();
+    }
+
+    public Task<ClockFace?> GetClockFace(int faceId)
+    {
+        return _matrixContext.ClockFace.FirstOrDefaultAsync(face => face.Id == faceId);
+    }
+
+    public async Task<ClockFace?> UpdateClockFace(int faceId, ClockFace newFace)
+    {
+        _matrixContext.ClockFace.Update(newFace);
         await _matrixContext.SaveChangesAsync();
-        return colorId;
+        return await GetClockFace(faceId);
+    }
+
+    public async Task<ClockFace?> AddClockFace(ClockFace clockFace)
+    {
+        await _matrixContext.ClockFace.AddAsync(clockFace);
+        await _matrixContext.SaveChangesAsync();
+        
+        return await _matrixContext.ClockFace.FirstOrDefaultAsync(face => face.Id == clockFace.Id);
+    }
+
+    public async Task<int> RemoveClockFace(int faceId)
+    {
+        var clockFace = _matrixContext.ClockFace.FirstOrDefault(face => face.Id == faceId);
+
+        if (clockFace == null)
+        {
+            return -1;
+        }
+        
+        clockFace.Deleted = true;
+        _matrixContext.ClockFace.Remove(clockFace);
+        await _matrixContext.SaveChangesAsync();
+
+        return clockFace.Id;
     }
 }

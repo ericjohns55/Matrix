@@ -7,4 +7,5 @@ public class MatrixColor
     public int Red { get; init; }
     public int Green { get; init; }
     public int Blue { get; init; }
+    public bool Deleted { get; set; }
 }

@@ -3,7 +3,7 @@ using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Types;
 using Matrix.WebServices;
-using RPiRgbLEDMatrix;
+// using RPiRgbLEDMatrix;
 
 using Color = System.Drawing.Color;
 
@@ -20,10 +20,10 @@ public class MatrixUpdater : IDisposable
     private readonly string _weatherUrl;
     private readonly string _serverUrl;
 
-    private readonly RGBLedMatrix _matrix;
-    private readonly RGBLedCanvas _offscreenCanvas;
+    // private readonly RGBLedMatrix _matrix;
+    // private readonly RGBLedCanvas _offscreenCanvas;
 
-    private readonly RGBLedFont _font;
+    // private readonly RGBLedFont _font;
 
     public MatrixUpdater(IConfiguration matrixSettings)
     {
@@ -56,26 +56,26 @@ public class MatrixUpdater : IDisposable
             _fontsPath = matrixSettings[ConfigConstants.FontsFolder]!;
             
             var fontPath = Path.Combine(_fontsPath, "6x12.bdf");
-            _font = new RGBLedFont(fontPath);
+            // _font = new RGBLedFont(fontPath);
         }
 
         try
         {
-            var options = new RGBLedMatrixOptions()
-            {
-                HardwareMapping = matrixSettings[ConfigConstants.HardwareMapping],
-                Rows = matrixSettings.GetValue<int>(ConfigConstants.Rows),
-                Cols =  matrixSettings.GetValue<int>(ConfigConstants.Columns),
-                ChainLength = matrixSettings.GetValue<int>(ConfigConstants.ChainLength),
-                Parallel = matrixSettings.GetValue<int>(ConfigConstants.Parallel),
-                Brightness = matrixSettings.GetValue<int>(ConfigConstants.Brightness),
-                LimitRefreshRateHz = matrixSettings.GetValue<int>(ConfigConstants.LimitRefreshRateHz),
-                DisableHardwarePulsing = matrixSettings.GetValue<bool>(ConfigConstants.DisableHardwarePulsing),
-                GpioSlowdown = matrixSettings.GetValue<int>(ConfigConstants.GpioSlowdown),
-            };
-            
-            _matrix = new RGBLedMatrix(options);
-            _offscreenCanvas = _matrix.CreateOffscreenCanvas();
+            // var options = new RGBLedMatrixOptions()
+            // {
+            //     HardwareMapping = matrixSettings[ConfigConstants.HardwareMapping],
+            //     Rows = matrixSettings.GetValue<int>(ConfigConstants.Rows),
+            //     Cols =  matrixSettings.GetValue<int>(ConfigConstants.Columns),
+            //     ChainLength = matrixSettings.GetValue<int>(ConfigConstants.ChainLength),
+            //     Parallel = matrixSettings.GetValue<int>(ConfigConstants.Parallel),
+            //     Brightness = matrixSettings.GetValue<int>(ConfigConstants.Brightness),
+            //     LimitRefreshRateHz = matrixSettings.GetValue<int>(ConfigConstants.LimitRefreshRateHz),
+            //     DisableHardwarePulsing = matrixSettings.GetValue<bool>(ConfigConstants.DisableHardwarePulsing),
+            //     GpioSlowdown = matrixSettings.GetValue<int>(ConfigConstants.GpioSlowdown),
+            // };
+            //
+            // _matrix = new RGBLedMatrix(options);
+            // _offscreenCanvas = _matrix.CreateOffscreenCanvas();
         }
         catch (Exception ex)
         {
@@ -98,7 +98,7 @@ public class MatrixUpdater : IDisposable
 
         ProgramState.UpdateNextTick = false;
         
-        _offscreenCanvas.Clear();
+        // _offscreenCanvas.Clear();
         
         switch (ProgramState.State)
         {
@@ -118,7 +118,7 @@ public class MatrixUpdater : IDisposable
                 break;
         }
 
-        _matrix.SwapOnVsync(_offscreenCanvas);
+        // _matrix.SwapOnVsync(_offscreenCanvas);
     }
     
     public void UpdateTimer()
@@ -145,8 +145,8 @@ public class MatrixUpdater : IDisposable
 
     public void UpdateClock(DateTime time)
     {
-        var color = new RPiRgbLEDMatrix.Color(128, 0, 0);
-        _offscreenCanvas.DrawText(_font, 10, 10, color, DateTime.Now.ToString("HH:mm:ss"));
+        // var color = new RPiRgbLEDMatrix.Color(128, 0, 0);
+        // _offscreenCanvas.DrawText(_font, 10, 10, color, DateTime.Now.ToString("HH:mm:ss"));
         
         // TODO: check for clock face changes
         Console.WriteLine(VariableUtility.ParseTime(time));
@@ -155,6 +155,6 @@ public class MatrixUpdater : IDisposable
     public void Dispose()
     {
         _client?.Dispose();
-        _matrix?.Dispose();
+        // _matrix?.Dispose();
     }
 }

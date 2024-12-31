@@ -12,23 +12,31 @@ public class MatrixClient : WebClient
     {
         _baseUri = new Uri(baseUri);
     }
-    
-    public Task<TestData> GetTestData()
+
+    public Task<Dictionary<string, object?>> GetConfiguration()
     {
-        Uri uri = BuildUri(_baseUri.AddToPath("matrix", "test"));
-        
+        Uri uri = BuildUri(_baseUri.AddToPath("matrix", "config"));
+
         return ExecuteRequest((client) => client.GetAsync(uri),
-            httpResponseMessage => HandleJsonResponse<TestData>(httpResponseMessage))
-                .OnSuccess(task => task);
+            httpResponseMessage => HandleJsonResponse<Dictionary<string, object?>>(httpResponseMessage)
+                .OnSuccess(config => config));
     }
 
-    public Task<TestData> PostTestData(TestData model)
+    public Task<ClockFace> GetClockFace()
     {
-        Uri uri = BuildUri(_baseUri.AddToPath("matrix", "test"));
-        
-        return ExecuteRequest(
-            (client) => client.PostAsync(uri, SerializeHttpContent(model)),
-            httpResponseMessage => HandleJsonResponse<TestData>(httpResponseMessage)
-                .OnSuccess(task => task));
+        Uri uri = BuildUri(_baseUri.AddToPath("matrix", "face"));
+
+        return ExecuteRequest((client) => client.GetAsync(uri),
+            httpResponseMessage => HandleJsonResponse<ClockFace>(httpResponseMessage)
+                .OnSuccess(clockFace => clockFace));
+    }
+
+    public Task<bool> SendUpdate()
+    {
+        Uri uri = BuildUri(_baseUri.AddToPath("matrix", "update"));
+
+        return ExecuteRequest((client) => client.PostAsync(uri, SerializeHttpContent(string.Empty)),
+            httpResponseMessage => HandleJsonResponse<bool>(httpResponseMessage)
+                .OnSuccess(response => response));
     }
 }

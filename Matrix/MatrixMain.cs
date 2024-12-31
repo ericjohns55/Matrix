@@ -2,7 +2,6 @@ using System.Diagnostics;
 using Matrix.Data.Exceptions;
 using Matrix.Display;
 using Matrix.WebServices;
-using RPiRgbLEDMatrix;
 
 namespace Matrix;
 
@@ -38,7 +37,12 @@ public class MatrixMain
         WebApplication webApp = await MatrixServer.CreateWebServer(args, configuration);
         Thread thread = new Thread(() => webApp.Run(MatrixUpdater.GetServerUrl()));
         thread.Start();
-        
+
+        using (var client = new MatrixClient(MatrixUpdater.GetServerUrl()))
+        {
+            await client.SendUpdate();
+        }
+
         using (MatrixUpdater)
         {
             int previousSecond = -1;
