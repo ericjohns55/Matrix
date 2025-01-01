@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Matrix", "Matrix\Matrix.csproj", "{0F58C9BF-544A-4364-A79F-8C354188FBAF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatrixTests", "MatrixTests\MatrixTests.csproj", "{A60A6C00-43C8-469B-BFBA-A0C99E1E90A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{0F58C9BF-544A-4364-A79F-8C354188FBAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F58C9BF-544A-4364-A79F-8C354188FBAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F58C9BF-544A-4364-A79F-8C354188FBAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A60A6C00-43C8-469B-BFBA-A0C99E1E90A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A60A6C00-43C8-469B-BFBA-A0C99E1E90A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A60A6C00-43C8-469B-BFBA-A0C99E1E90A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A60A6C00-43C8-469B-BFBA-A0C99E1E90A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,3 +1,4 @@
+using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Types;
 using Microsoft.EntityFrameworkCore;
@@ -30,20 +31,38 @@ public class ColorService : IColorService
         return _matrixContext.MatrixColor.FirstOrDefaultAsync(color => color.Id == colorId);
     }
 
-    public Task<MatrixColor?> GetMatrixColor(string colorName)
+    public async Task<MatrixColor?> UpdateMatrixColor(int colorId, MatrixColor updatedColor)
     {
-        return _matrixContext.MatrixColor.FirstOrDefaultAsync(color => color.Name == colorName);
-    }
+        var originalColor = await GetMatrixColor(colorId);
 
-    public async Task<MatrixColor?> UpdateMatrixColor(int colorId, MatrixColor color)
-    {
-        _matrixContext.MatrixColor.Update(color);
+        if (originalColor == null)
+        {
+            throw new MatrixEntityNotFoundException($"Color with id {colorId} not found");
+        }
+
+        if (updatedColor == null)
+        {
+            throw new ArgumentNullException($"{updatedColor} cannot be null");
+        }
+        
+        originalColor.Name = updatedColor.Name;
+        originalColor.Red = updatedColor.Red;
+        originalColor.Green = updatedColor.Green;
+        originalColor.Blue = updatedColor.Blue;
+        
+        _matrixContext.MatrixColor.Update(updatedColor);
         await _matrixContext.SaveChangesAsync();
+        
         return await GetMatrixColor(colorId);
     }
 
     public async Task<MatrixColor?> AddMatrixColor(MatrixColor color)
     {
+        if (color == null)
+        {
+            throw new ArgumentNullException($"{color} cannot be null");
+        }
+        
         await _matrixContext.MatrixColor.AddAsync(color);
         await _matrixContext.SaveChangesAsync();
         
@@ -53,13 +72,30 @@ public class ColorService : IColorService
     public async Task<int> RemoveMatrixColor(int colorId)
     {
         MatrixColor? color = await GetMatrixColor(colorId);
-        
-        if (color != null)
+
+        if (color == null)
         {
-            _matrixContext.MatrixColor.Remove(color);
+            throw new MatrixEntityNotFoundException($"Color with id {colorId} not found");
         }
         
+        color.Deleted = true;
         await _matrixContext.SaveChangesAsync();
-        return colorId;
+        
+        return color.Id;
+    }
+
+    public async Task<MatrixColor> RestoreMatrixColor(int colorId)
+    {
+        MatrixColor? color = await GetMatrixColor(colorId);
+
+        if (color == null)
+        {
+            throw new MatrixEntityNotFoundException($"Color with id {colorId} was never deleted");
+        }
+        
+        color.Deleted = false;
+        await _matrixContext.SaveChangesAsync();
+        
+        return color;
     }
 }

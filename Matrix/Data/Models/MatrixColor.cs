@@ -1,11 +1,22 @@
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+
 namespace Matrix.Data.Models;
 
+[PrimaryKey(nameof(Id))]
+[Index(nameof(Name), IsUnique = true)]
 public class MatrixColor
 {
     public int Id { get; init; }
-    public string Name { get; init; }
-    public int Red { get; init; }
-    public int Green { get; init; }
-    public int Blue { get; init; }
+    
+    [MaxLength(255)]
+    public string Name { get; set; } = string.Empty;
+    
+    public int Red { get; set; }
+    
+    public int Green { get; set; }
+    
+    public int Blue { get; set; }
+    
     public bool Deleted { get; set; }
 }
