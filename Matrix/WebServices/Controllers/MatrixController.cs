@@ -3,6 +3,7 @@ using Matrix.Data;
 using Microsoft.AspNetCore.Mvc;
 using Matrix.WebServices.Services;
 using Matrix.Data.Models;
+using Matrix.Display;
 using Matrix.Utilities;
 using Matrix.WebServices.Authentication;
 
@@ -31,6 +32,13 @@ public class MatrixController  : Controller
     public IActionResult GetConfig()
     {
         return Ok(ConfigUtility.GetConfig(_configuration));
+    }
+
+    [HttpGet("state")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+    public IActionResult GetState()
+    {
+        return Ok(ProgramState.State.ToString());
     }
 
     [HttpGet("face")]

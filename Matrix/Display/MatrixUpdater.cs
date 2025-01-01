@@ -1,4 +1,5 @@
 using Matrix.Data;
+using Matrix.Data.Utilities;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Types;
@@ -134,9 +135,7 @@ public class MatrixUpdater : IDisposable
 
             if (timer.HasEnded())
             {
-                ProgramState.State = ProgramState.PreviousState;
-                ProgramState.PreviousState = MatrixState.Timer;
-                ProgramState.UpdateNextTick = true;
+                ProgramState.RestorePreviousState(MatrixState.Timer);
             }
             
             Console.WriteLine(timer.GetFormattedTimer());

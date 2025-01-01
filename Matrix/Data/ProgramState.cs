@@ -9,7 +9,14 @@ public class ProgramState
     public static MatrixState PreviousState { get; set; } = MatrixState.Clock;
     public static bool UpdateNextTick { get; set; } = true;
     
-    public static MatrixTimer? Timer { get; set; }   
+    public static MatrixTimer? Timer { get; set; }
+
+    public static void RestorePreviousState(MatrixState currentState)
+    {
+        State = PreviousState;
+        PreviousState = currentState;
+        UpdateNextTick = true;
+    }
 
     public static bool NeedsUpdate(DateTime now, ClockFace? currentClockFace)
     {
@@ -26,7 +33,7 @@ public class ProgramState
             }
         }
 
-        if (State == MatrixState.Timer && (Timer != null && Timer.NeedsScreenUpdate()))
+        if (State == MatrixState.Timer && Timer != null && Timer.NeedsScreenUpdate())
         {
             return true;
         }

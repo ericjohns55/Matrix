@@ -1,4 +1,4 @@
-namespace Matrix.Data;
+namespace Matrix.Data.Utilities;
 
 public class ConfigConstants
 {

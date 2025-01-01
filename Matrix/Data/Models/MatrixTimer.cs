@@ -22,9 +22,13 @@ public class MatrixTimer
     private int TotalTicks => Hour * 3600 + Minute * 60 + Second;
     private int _currentTick = 0;
 
-    public void Start()
+    public void Start(bool resetTicks = true)
     {
-        _currentTick = TotalTicks;
+        if (resetTicks)
+        {
+            _currentTick = TotalTicks;
+        }
+        
         State = TimerState.Running;
     }
 
@@ -32,6 +36,13 @@ public class MatrixTimer
     {
         State = TimerState.Cancelled;
         _currentTick = 0;
+        
+        ProgramState.RestorePreviousState(MatrixState.Timer);
+    }
+
+    public void Pause()
+    {
+        State = TimerState.Paused;
     }
 
     public void Tick(int blinkCount)
@@ -56,7 +67,7 @@ public class MatrixTimer
 
     public bool HasEnded()
     {
-        return State == TimerState.Complete;
+        return State == TimerState.Complete || State == TimerState.Cancelled;
     }
 
     public bool NeedsScreenUpdate()
@@ -91,12 +102,8 @@ public class MatrixTimer
             {
                 stringBuilder.Append($"{hours}:");
             }
-
-            if (minutes > 0)
-            {
-                stringBuilder.Append($"{minutes:D2}:");
-            }
         
+            stringBuilder.Append($"{minutes:D2}:");
             stringBuilder.Append($"{seconds:D2}");
         }
         

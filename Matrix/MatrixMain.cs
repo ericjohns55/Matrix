@@ -53,10 +53,10 @@ public class MatrixMain
                 {
                     previousSecond = time.Second;
 
-                    var watch = Stopwatch.StartNew();
+                    // var watch = Stopwatch.StartNew();
                     MatrixUpdater.HandleUpdateLoop(time);
-                    watch.Stop();
-                    Console.WriteLine($"Time elapsed: {watch.ElapsedMilliseconds} ms");
+                    // watch.Stop();
+                    // Console.WriteLine($"Time elapsed: {watch.ElapsedMilliseconds} ms");
                 }
         
                 Thread.Sleep(MatrixUpdater.GetUpdateInterval());

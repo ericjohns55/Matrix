@@ -1,4 +1,4 @@
-using Matrix.Data;
+using Matrix.Data.Utilities;
 using Matrix.WebServices.Authentication;
 using Matrix.WebServices.Services;
 using Microsoft.EntityFrameworkCore;
