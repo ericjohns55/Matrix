@@ -3,7 +3,7 @@ using Matrix.Data.Utilities;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Types;
-using Matrix.WebServices;
+using Matrix.WebServices.Clients;
 // using RPiRgbLEDMatrix;
 
 using Color = System.Drawing.Color;
@@ -12,7 +12,8 @@ namespace Matrix.Display;
 
 public class MatrixUpdater : IDisposable
 {
-    private MatrixClient _client;
+    public MatrixClient MatrixClient;
+    public WeatherClient? WeatherClient;
     public ClockFace? ClockFace { get; set; }
 
     private readonly int _updateInterval;
@@ -40,16 +41,17 @@ public class MatrixUpdater : IDisposable
             throw new ConfigurationException("Could not parse UpdateInterval");
         }
 
+        if (!string.IsNullOrWhiteSpace(matrixSettings[ConfigConstants.WeatherUrl]))
+        {
+            _weatherUrl = matrixSettings[ConfigConstants.WeatherUrl]!;
+            WeatherClient = new WeatherClient(_weatherUrl);
+        }
+
         var baseUrl = matrixSettings[ConfigConstants.ServerUrl];
         if (!string.IsNullOrWhiteSpace(baseUrl))
         {
             _serverUrl = baseUrl;
-            _client = new MatrixClient(_serverUrl);
-        }
-
-        if (!string.IsNullOrWhiteSpace(matrixSettings[ConfigConstants.WeatherUrl]))
-        {
-            _weatherUrl = matrixSettings[ConfigConstants.WeatherUrl]!;
+            MatrixClient = new MatrixClient(_serverUrl);
         }
 
         if (!string.IsNullOrWhiteSpace(matrixSettings[ConfigConstants.FontsFolder]))
@@ -87,8 +89,6 @@ public class MatrixUpdater : IDisposable
     public int GetUpdateInterval() => _updateInterval;
 
     public string GetServerUrl() => _serverUrl;
-    
-    public string GetWeatherUrl() => _weatherUrl;
 
     public void HandleUpdateLoop(DateTime now)
     {
@@ -122,7 +122,7 @@ public class MatrixUpdater : IDisposable
         // _matrix.SwapOnVsync(_offscreenCanvas);
     }
     
-    public void UpdateTimer()
+    private void UpdateTimer()
     {
         var timer = ProgramState.Timer;
 
@@ -142,7 +142,7 @@ public class MatrixUpdater : IDisposable
         }
     }
 
-    public void UpdateClock(DateTime time)
+    private void UpdateClock(DateTime time)
     {
         // var color = new RPiRgbLEDMatrix.Color(128, 0, 0);
         // _offscreenCanvas.DrawText(_font, 10, 10, color, DateTime.Now.ToString("HH:mm:ss"));
@@ -153,7 +153,8 @@ public class MatrixUpdater : IDisposable
 
     public void Dispose()
     {
-        _client?.Dispose();
+        MatrixClient.Dispose();
+        WeatherClient?.Dispose();
         // _matrix?.Dispose();
     }
 }

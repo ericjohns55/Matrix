@@ -1,4 +1,7 @@
+using Matrix.Data;
 using Matrix.Data.Models;
+using Matrix.Data.Utilities;
+using Matrix.WebServices.Clients;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matrix.WebServices.Services;
@@ -6,10 +9,28 @@ namespace Matrix.WebServices.Services;
 public class MatrixService : IMatrixService
 {
     private MatrixContext _matrixContext;
+    private IConfiguration _configuration;
     
-    public MatrixService(MatrixContext context)
+    public MatrixService(MatrixContext context, IConfiguration configuration)
     {
         _matrixContext = context;
+        _configuration = configuration;
+    }
+
+    public async Task<Dictionary<string, string>> UpdateVariables()
+    {
+        var weatherUrl = _configuration.GetValue<string>(ConfigConstants.WeatherUrl);
+
+        if (weatherUrl != null)
+        {
+            using (var weatherClient = new WeatherClient(weatherUrl))
+            {
+                var weatherData = await weatherClient.GetWeather();
+                ProgramState.UpdateVariables(weatherData);
+            }
+        }
+
+        return ProgramState.CurrentVariables;
     }
 
     public ClockFace AddNewClockFace(ClockFace newClockFace)

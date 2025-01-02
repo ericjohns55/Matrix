@@ -26,6 +26,20 @@ public class MatrixController  : Controller
         _matrixService = matrixService;
         _configuration = configuration;
     }
+
+    [HttpGet("variables")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, string>))]
+    public IActionResult GetVariables()
+    {
+        return Ok(ProgramState.CurrentVariables);
+    }
+    
+    [HttpPost("variables")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, string>))]
+    public async Task<IActionResult> UpdateVariables()
+    {
+        return Ok(await _matrixService.UpdateVariables());
+    }
     
     [HttpGet("config")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, object?>))]

@@ -1,11 +1,14 @@
 using System.Collections.Specialized;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Web;
+using Matrix.Data.Exceptions;
 using Matrix.Utilities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+using JsonConverter = Newtonsoft.Json.JsonConverter;
 
-namespace Matrix.WebServices.Client;
+namespace Matrix.WebServices.Clients;
 
 public class WebClient : IDisposable
 {
@@ -21,12 +24,11 @@ public class WebClient : IDisposable
         var base64Key = Convert.ToBase64String(encodedKey);
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {base64Key}");
     }
-    
-    private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions()
+
+    private readonly JsonSerializerSettings _jsonSettings = new JsonSerializerSettings()
     {
-        DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() }
+        ContractResolver = new CamelCasePropertyNamesContractResolver(),
+        Converters = new List<JsonConverter>() { new StringEnumConverter() }
     };
     
     protected Uri BuildUri(Uri uri, NameValueCollection? queryString = null)
@@ -71,12 +73,29 @@ public class WebClient : IDisposable
 
     protected HttpContent SerializeHttpContent<T>(T value)
     {
-        return new StringContent(JsonSerializer.Serialize(value, _jsonOptions), Encoding.UTF8, "application/json");
+        return new StringContent(JsonConvert.SerializeObject(value, _jsonSettings), Encoding.UTF8, "application/json");
     }
 
     private Task<T> DeserializeHttpContent<T>(HttpResponseMessage response)
     {
-        return response.Content.ReadAsByteArrayAsync().OnSuccess(responseBytes => (T) JsonSerializer.Deserialize<T>(responseBytes, _jsonOptions));
+        return response.Content.ReadAsStringAsync().OnSuccess(responseString => (T) JsonConvert.DeserializeObject<T>(responseString, _jsonSettings));
+    }
+
+    protected async Task<string> HandleResponseAsString(HttpResponseMessage response)
+    {
+        var stringContent = await response.Content.ReadAsStringAsync();
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new WebException((int) response.StatusCode, stringContent);
+        }
+
+        if (stringContent == null)
+        {
+            throw new WebException(500, "Could not read JSON data");
+        }
+
+        return stringContent;
     }
 
     protected async Task<T> HandleJsonResponse<T>(HttpResponseMessage response)

@@ -1,5 +1,6 @@
-using System.Diagnostics;
+using Matrix.Data;
 using Matrix.Data.Exceptions;
+using Matrix.Data.Models;
 using Matrix.Display;
 using Matrix.WebServices;
 
@@ -37,14 +38,12 @@ public class MatrixMain
         WebApplication webApp = await MatrixServer.CreateWebServer(args, configuration);
         Thread thread = new Thread(() => webApp.Run(MatrixUpdater.GetServerUrl()));
         thread.Start();
-
-        using (var client = new MatrixClient(MatrixUpdater.GetServerUrl()))
-        {
-            await client.SendUpdate();
-        }
-
+        
         using (MatrixUpdater)
         {
+            var weather = await MatrixUpdater.WeatherClient?.GetWeather()!;
+            ProgramState.UpdateVariables(weather);
+            
             int previousSecond = -1;
             while (_matrixLoopRunning)
             {

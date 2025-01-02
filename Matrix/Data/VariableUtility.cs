@@ -1,21 +1,86 @@
+using System.Globalization;
 using System.Text;
+using Matrix.Data.Models;
+using Matrix.Data.Utilities;
 
 namespace Matrix.Data;
 
 public class VariableUtility
 {
-    public static string ParseTime(DateTime dateTime, bool militaryTime = false)
+    public static string ParseTime(DateTime dateTime, bool includeSeconds = true, bool militaryTime = false)
     {
         var stringBuilder = new StringBuilder();
         stringBuilder.Append($"{dateTime.Hour % (militaryTime ? 1 : 12)}:");
-        stringBuilder.Append($"{dateTime.Minute:D2}:");
-        stringBuilder.Append($"{dateTime.Second:D2}");
+        stringBuilder.Append($"{dateTime.Minute:D2}");
+
+        if (includeSeconds)
+        {
+            stringBuilder.Append($":{dateTime.Second:D2}");
+        }
 
         if (!militaryTime)
         {
-            stringBuilder.Append(dateTime.Hour > 11 ? " PM" : " AM");
+            stringBuilder.Append(dateTime.Hour < 12 ? "am" : "pm");
         }
 
         return stringBuilder.ToString();
+    }
+
+    public static string ParseDate(DateTime dateTime)
+    {
+        return $"{dateTime.Month:D2}-{dateTime.Day:D2}-{dateTime.Year:D2}";
+    }
+
+    public static string ParseTimer(MatrixTimer? timer)
+    {
+        if (timer == null)
+        {
+            return "None";
+        }
+        
+        var stringBuilder = new StringBuilder();
+        if (timer.Hour > 0)
+        {
+            stringBuilder.Append($"{timer.Hour:D2}:");
+        }
+        
+        stringBuilder.Append($"{timer.Minute:D2}:{timer.Second:D2}");
+        return stringBuilder.ToString();
+    }
+    
+    public static Dictionary<string, string> BuildVariableDictionary(WeatherModel weatherData, MatrixTimer? timer = null)
+    {
+        var variablesDictionary = new Dictionary<string, string>();
+        
+        var time = DateTime.Now;
+        
+        variablesDictionary.Add(VariableConstants.HourVariable, (time.Hour % 12).ToString());
+        variablesDictionary.Add(VariableConstants.MinuteVariable, time.Minute.ToString());
+        variablesDictionary.Add(VariableConstants.SecondVariable, time.Second.ToString());
+        variablesDictionary.Add(VariableConstants.Hour24Variable, time.Hour.ToString());
+        variablesDictionary.Add(VariableConstants.AmPmVariable, time.Hour < 12 ? "AM" : "PM");
+        variablesDictionary.Add(VariableConstants.TimeFormattedVariable, ParseTime(time, false));
+        variablesDictionary.Add(VariableConstants.TempVariable, weatherData.Temp.ToString(CultureInfo.CurrentCulture));
+        variablesDictionary.Add(VariableConstants.TempLowVariable, weatherData.TempLow.ToString(CultureInfo.CurrentCulture));
+        variablesDictionary.Add(VariableConstants.TempHighVariable, weatherData.TempHigh.ToString(CultureInfo.CurrentCulture));
+        variablesDictionary.Add(VariableConstants.TempFeelVariable, weatherData.RealFeel.ToString(CultureInfo.CurrentCulture));
+        variablesDictionary.Add(VariableConstants.WindSpeedVariable, weatherData.WindSpeed.ToString(CultureInfo.CurrentCulture));
+        variablesDictionary.Add(VariableConstants.HumidityVariable, weatherData.Humidity.ToString(CultureInfo.CurrentCulture));
+        variablesDictionary.Add(VariableConstants.ForecastCurrentVariable, weatherData.CurrentForecast);
+        variablesDictionary.Add(VariableConstants.ForecastCurrentShortVariable, weatherData.CurrentForecastShort);
+        variablesDictionary.Add(VariableConstants.ForecastDay, weatherData.DayForecast);
+        variablesDictionary.Add(VariableConstants.FormattedDateVariable, ParseDate(time));
+        variablesDictionary.Add(VariableConstants.MonthNameVariable, CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(time.Month));
+        variablesDictionary.Add(VariableConstants.DayNameVariable, time.DayOfWeek.ToString());
+        variablesDictionary.Add(VariableConstants.MonthNumVariable, time.Month.ToString());
+        variablesDictionary.Add(VariableConstants.MonthDayVariable, time.Day.ToString());
+        variablesDictionary.Add(VariableConstants.WeekDayNumVariable, ((int) time.DayOfWeek).ToString());
+        variablesDictionary.Add(VariableConstants.YearVariable, time.Year.ToString());
+        variablesDictionary.Add(VariableConstants.TimerHourVariable, timer?.Hour.ToString() ?? "-1");
+        variablesDictionary.Add(VariableConstants.TimerMinuteVariable, timer?.Minute.ToString() ?? "-1");
+        variablesDictionary.Add(VariableConstants.TimerSecondVariable, timer?.Second.ToString() ?? "-1");
+        variablesDictionary.Add(VariableConstants.TimerFormattedVariable, ParseTimer(timer));
+        
+        return variablesDictionary;
     }
 }

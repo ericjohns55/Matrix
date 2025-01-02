@@ -8,7 +8,9 @@ public class ProgramState
     public static MatrixState State { get; set; } = MatrixState.Clock;
     public static MatrixState PreviousState { get; set; } = MatrixState.Clock;
     public static bool UpdateNextTick { get; set; } = true;
-    
+
+    public static Dictionary<string, string> CurrentVariables { get; internal set; }
+
     public static MatrixTimer? Timer { get; set; }
 
     public static void RestorePreviousState(MatrixState currentState)
@@ -44,5 +46,10 @@ public class ProgramState
         }
 
         return false;
+    }
+
+    public static void UpdateVariables(WeatherModel weather)
+    {
+        CurrentVariables = VariableUtility.BuildVariableDictionary(weather, ProgramState.Timer);
     }
 }

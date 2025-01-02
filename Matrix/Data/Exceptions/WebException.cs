@@ -1,4 +1,4 @@
-namespace Matrix.WebServices;
+namespace Matrix.Data.Exceptions;
 
 public class WebException : Exception
 {

@@ -1,21 +1,20 @@
 using Matrix.Data.Models;
 using Matrix.Utilities;
-using Matrix.WebServices.Client;
 
-namespace Matrix.WebServices;
+namespace Matrix.WebServices.Clients;
 
 public class MatrixClient : WebClient
 {
-    private Uri _baseUri;
-
-    public MatrixClient(string baseUri)
+    private Uri _serverUri;
+    
+    public MatrixClient(string serverUri)
     {
-        _baseUri = new Uri(baseUri);
+        _serverUri = new Uri(serverUri);
     }
 
     public Task<Dictionary<string, object?>> GetConfiguration()
     {
-        Uri uri = BuildUri(_baseUri.AddToPath("matrix", "config"));
+        Uri uri = BuildUri(_serverUri.AddToPath("matrix", "config"));
 
         return ExecuteRequest((client) => client.GetAsync(uri),
             httpResponseMessage => HandleJsonResponse<Dictionary<string, object?>>(httpResponseMessage)
@@ -24,7 +23,7 @@ public class MatrixClient : WebClient
 
     public Task<ClockFace> GetClockFace()
     {
-        Uri uri = BuildUri(_baseUri.AddToPath("matrix", "face"));
+        Uri uri = BuildUri(_serverUri.AddToPath("matrix", "face"));
 
         return ExecuteRequest((client) => client.GetAsync(uri),
             httpResponseMessage => HandleJsonResponse<ClockFace>(httpResponseMessage)
@@ -33,7 +32,7 @@ public class MatrixClient : WebClient
 
     public Task<bool> SendUpdate()
     {
-        Uri uri = BuildUri(_baseUri.AddToPath("matrix", "update"));
+        Uri uri = BuildUri(_serverUri.AddToPath("matrix", "update"));
 
         return ExecuteRequest((client) => client.PostAsync(uri, SerializeHttpContent(string.Empty)),
             httpResponseMessage => HandleJsonResponse<bool>(httpResponseMessage)
