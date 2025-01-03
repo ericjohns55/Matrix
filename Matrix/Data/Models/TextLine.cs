@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using Matrix.Data.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matrix.Data.Models;
@@ -7,11 +9,12 @@ public class TextLine
 {
     public int Id { get; init; }
     
-    public string Text { get; set; }
+    [Required] public string Text { get; set; }
 
     public int XLocation { get; set; }
     public int YLocation { get; set; }
-    public bool RelativeLocation { get; set; }
+    public Positioning.XPositioning XPositioning { get; set; }
+    public Positioning.YPositioning YPositioning { get; set; }
 
     public int MatrixColorId { get; set; }
     public MatrixColor Color { get; set; }

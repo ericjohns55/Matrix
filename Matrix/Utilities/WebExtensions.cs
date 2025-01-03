@@ -53,9 +53,9 @@ public static class WebExtensions
         }, TaskContinuationOptions.ExecuteSynchronously);
     }
 
-    public static Task<TResult> OnFailure<TResult>(
-        this Task<TResult> task,
-        Func<Exception, TResult> onFailureFunction)
+    public static Task OnFailure(
+        this Task task,
+        Func<Exception, Task> onFailureFunction)
     {
         return task.ContinueWith(t =>
         {
@@ -64,7 +64,7 @@ public static class WebExtensions
                 return onFailureFunction(t.Exception?.GetBaseException());
             }
 
-            return task.Result;
+            return task;
         }, TaskContinuationOptions.ExecuteSynchronously);
     }
 

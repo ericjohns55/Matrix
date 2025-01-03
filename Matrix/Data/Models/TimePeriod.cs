@@ -19,6 +19,8 @@ public class TimePeriod
     
     public int Id { get; init; }
 
+    public ClockFace ClockFace { get; init; }
+
     public int ClockFaceId { get; init; }
 
     public int StartHour { get; init; }

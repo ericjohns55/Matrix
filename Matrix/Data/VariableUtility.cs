@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Matrix.Data.Models;
+using Matrix.Data.Models.Web;
 using Matrix.Data.Utilities;
 
 namespace Matrix.Data;
@@ -10,7 +11,17 @@ public class VariableUtility
     public static string ParseTime(DateTime dateTime, bool includeSeconds = true, bool militaryTime = false)
     {
         var stringBuilder = new StringBuilder();
-        stringBuilder.Append($"{dateTime.Hour % (militaryTime ? 1 : 12)}:");
+
+        var currentHour = dateTime.Hour;
+        if (!militaryTime)
+        {
+            if (currentHour > 12)
+            {
+                currentHour -= 12;
+            } 
+        }
+        
+        stringBuilder.Append($"{currentHour}:");
         stringBuilder.Append($"{dateTime.Minute:D2}");
 
         if (includeSeconds)

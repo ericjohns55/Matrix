@@ -1,5 +1,7 @@
 using Matrix.Data.Models;
+using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
+using Matrix.Data.Utilities;
 using Matrix.WebServices.Authentication;
 using Matrix.WebServices.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -7,9 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Matrix.WebServices.Controllers;
 
-[Route("face")]
+[Route("clockface")]
 [ApiKeyAuthFilter]
-public class ClockFaceController : Controller
+public class ClockFaceController : MatrixBaseController
 {
     private readonly ILogger<ClockFaceController> _logger;
     private readonly IClockFaceService _clockFaceService;
@@ -20,50 +22,75 @@ public class ClockFaceController : Controller
         _clockFaceService = clockFaceService;
     }
 
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<ClockFace>))]
-    public IActionResult GetAllClockFaces()
+    [HttpPost("at")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<int>))]
+    public async Task<IActionResult> GetClockFaceForTime([FromBody] TimePayload timePayload)
     {
-        return Ok(_clockFaceService.GetAllClockFaces());
+        return Ok(await ExecuteToMatrixResponseAsync(() =>
+            _clockFaceService.GetClockFaceForTime(timePayload)));
+    }
+
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixListResponse<ClockFace>))]
+    public async Task<IActionResult> GetAllClockFaces()
+    {
+        return Ok(await ExecuteToMatrixListResponseAsync(() =>
+            _clockFaceService.GetAllClockFaces()));
     }
 
     [HttpGet("deleted")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<ClockFace>))]
-    public IActionResult GetDeletedClockFaces()
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixListResponse<ClockFace>))]
+    public async Task<IActionResult> GetDeletedClockFaces()
     {
-        return Ok(_clockFaceService.GetAllClockFaces(SearchFilter.Deleted));
+        return Ok(await ExecuteToMatrixListResponseAsync(() =>
+            _clockFaceService.GetAllClockFaces(SearchFilter.Deleted)));
     }
 
     [HttpGet("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ClockFace))]
-    public IActionResult GetClockFace(int id)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ClockFace>))]
+    public async Task<IActionResult> GetClockFace(int id)
     {
-        return Ok(_clockFaceService.GetClockFace(id));
+        return Ok(await ExecuteToMatrixResponseAsync(() => 
+            _clockFaceService.GetClockFace(id)));
     }
 
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ClockFace))]
-    public IActionResult AddClockFace([FromBody] ClockFace clockFace)
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MatrixResponse<ClockFace>))]
+    public async Task<IActionResult> AddClockFace([FromBody] ClockFace clockFace)
     {
-        _logger.LogInformation($"Adding clock face: {clockFace.Name}");
-        _clockFaceService.AddClockFace(clockFace);
-        return Ok(clockFace);
+        if (clockFace == null)
+        {
+            throw new ClockFaceException(WebConstants.ClockFaceNull);
+        }
+        
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+        {
+            _logger.LogInformation($"Adding clock face: {clockFace.Name}");
+
+            return await _clockFaceService.AddClockFace(clockFace);
+        }));
     }
 
     [HttpPut("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ClockFace))]
-    public IActionResult UpdateClockFace(int id, [FromBody] ClockFace clockFace)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ClockFace>))]
+    public async Task<IActionResult> UpdateClockFace(int id, [FromBody] ClockFace clockFace)
     {
-        _logger.LogInformation($"Updating clock face with ID {id}");
-        return Ok(_clockFaceService.UpdateClockFace(id, clockFace));
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+        {
+            _logger.LogInformation($"Updating clock face with ID {id}");
+            
+            return await _clockFaceService.UpdateClockFace(id, clockFace);
+        }));
     }
     
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(int))]
-
-    public IActionResult DeleteClockFace(int id)
+    public async Task<IActionResult> DeleteClockFace(int id)
     {
-        _logger.LogInformation($"Deleting clock face with ID {id}");
-        return Ok(_clockFaceService.RemoveClockFace(id));
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+        {
+            _logger.LogInformation($"Deleting clock face with ID {id}");
+            return await _clockFaceService.RemoveClockFace(id);
+        }));
     }
 }

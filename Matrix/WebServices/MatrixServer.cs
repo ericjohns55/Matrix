@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Matrix.Data.Utilities;
 using Matrix.WebServices.Authentication;
 using Matrix.WebServices.Services;
@@ -31,6 +33,12 @@ public static class MatrixServer
         services.AddSwaggerGen();
         services.AddMvc();
 
+        services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        });
+
         services.AddScoped<ApiKeyAuthFilter>();
 
         services.AddScoped<IMatrixService, MatrixService>();
@@ -62,6 +70,8 @@ public static class MatrixServer
                 await seeder.Seed(configuration.GetValue<bool>(ConfigConstants.SeedDrop));
             }
         }
+
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         app.UseHttpsRedirection();
 

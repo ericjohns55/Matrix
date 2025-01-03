@@ -1,10 +1,10 @@
 using Matrix.Data;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
+using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
 using Matrix.WebServices.Authentication;
-using Matrix.WebServices.Services;
 using Microsoft.AspNetCore.Mvc;
 using Timer = Matrix.Data.Models.Timer;
 
@@ -12,88 +12,114 @@ namespace Matrix.WebServices.Controllers;
 
 [Route("timer")]
 [ApiKeyAuthFilter]
-public class TimerController : Controller
+public class TimerController : MatrixBaseController
 {
     private readonly ILogger<TimerController> _logger;
-    private readonly IMatrixService _matrixService;
 
-    public TimerController(ILogger<TimerController> logger, IMatrixService matrixService)
+    public TimerController(ILogger<TimerController> logger)
     {
         _logger = logger;
-        _matrixService = matrixService;
     }
 
     [HttpPost]
     [Route("create")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
     public IActionResult CreateTimer([FromBody] Timer timer, bool alsoStart = false)
     {
-        ProgramState.PreviousState = ProgramState.State;
-        ProgramState.State = MatrixState.Timer;
-        ProgramState.Timer = new MatrixTimer(timer);
-        ProgramState.UpdateNextTick = true;
-
-        if (alsoStart)
+        return Ok(ExecuteToMatrixResponse(() =>
         {
-            ProgramState.Timer.Start();
-        }
-        
-        return Ok("Success");
+            ProgramState.PreviousState = ProgramState.State;
+            ProgramState.State = MatrixState.Timer;
+            ProgramState.Timer = new MatrixTimer(timer);
+            ProgramState.UpdateNextTick = true;
+
+            if (alsoStart)
+            {
+                ProgramState.Timer.Start();
+            }
+
+            return true;
+        }));
     }
 
     [HttpPost]
     [Route("start")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
     public IActionResult StartTimer()
     {
-        CheckIfNullTimer();
-        
-        ProgramState.Timer?.Start();
-        return Ok("Success");
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            CheckIfNullTimer();
+
+            ProgramState.Timer?.Start();
+
+            return true;
+        }));
     }
 
     [HttpPost]
     [Route("stop")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
     public IActionResult StopTimer()
     {
-        CheckIfNullTimer();
-        
-        ProgramState.Timer?.Cancel();
-        return Ok("Success");
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            CheckIfNullTimer();
+
+            ProgramState.Timer?.Cancel();
+            
+            return true;
+        }));
     }
 
     [HttpPost]
     [Route("pause")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
     public IActionResult PauseTimer()
     {
-        CheckIfNullTimer();
-        
-        ProgramState.Timer?.Pause();
-        return Ok("Success");
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            CheckIfNullTimer();
+
+            ProgramState.Timer?.Pause();
+            
+            return true;
+        }));
     }
 
     [HttpPost]
     [Route("resume")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
     public IActionResult ResumeTimer()
     {
-        CheckIfNullTimer();
-        
-        ProgramState.Timer?.Start(false);
-        return Ok("Success");
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            CheckIfNullTimer();
+
+            ProgramState.Timer?.Start(false);
+
+            return true;
+        }));
     }
 
     [HttpGet]
     [Route("state")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
     public IActionResult GetTimerState()
     {
-        CheckIfNullTimer();
-        
-        return Ok(ProgramState.Timer?.State.ToString());
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            CheckIfNullTimer();
+
+            return ProgramState.Timer?.State.ToString() ?? "Unknown";
+        }));
     }
 
     private void CheckIfNullTimer()
     {
         if (ProgramState.Timer == null)
         {
+            _logger.LogInformation("Timer is null");
             throw new TimerException(WebConstants.TimerNull);
         }
     }

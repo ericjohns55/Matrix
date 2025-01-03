@@ -1,4 +1,4 @@
-namespace Matrix.Data.Models;
+namespace Matrix.Data.Models.Web;
 
 public class WeatherModel
 {
