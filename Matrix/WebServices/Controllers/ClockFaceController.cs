@@ -22,6 +22,14 @@ public class ClockFaceController : MatrixBaseController
         _clockFaceService = clockFaceService;
     }
 
+    [HttpGet("validate")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ValidateTimePeriods()
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() =>
+            _clockFaceService.ValidateClockFaceTimePeriods()));
+    }
+
     [HttpPost("at")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<int>))]
     public async Task<IActionResult> GetClockFaceForTime([FromBody] TimePayload timePayload)

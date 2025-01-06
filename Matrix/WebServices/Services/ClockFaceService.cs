@@ -1,9 +1,9 @@
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Models.Web;
+using Matrix.Data.Models.TimeValidation;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matrix.WebServices.Services;
@@ -11,6 +11,7 @@ namespace Matrix.WebServices.Services;
 public class ClockFaceService : IClockFaceService
 {
     private readonly MatrixContext _matrixContext;
+    private readonly int _minutesInDay = 24 * 60;
 
     public ClockFaceService(MatrixContext matrixContext)
     {
@@ -167,5 +168,72 @@ public class ClockFaceService : IClockFaceService
         await _matrixContext.SaveChangesAsync();
 
         return clockFace;
+    }
+    
+    public async Task<ValidationResponse> ValidateClockFaceTimePeriods()
+    {
+        var timePeriods = await _matrixContext.TimePeriod.ToListAsync();
+        var validationFailures = new List<ValidationFailure>();
+
+        foreach (DayOfWeek dayOfWeek in Enum.GetValues(typeof(DayOfWeek)))
+        {
+            var timePeriodsForDay = timePeriods.Where(timePeriod => timePeriod.DaysOfWeek.Contains(dayOfWeek)).ToList();
+            
+            List<ValidationUnit> allUnits = new List<ValidationUnit>(_minutesInDay);
+            for (int i = 0; i < _minutesInDay; i++)
+            {
+                allUnits.Add(new ValidationUnit());
+            }
+
+            foreach (var timePeriod in timePeriodsForDay)
+            {
+                int startTime = timePeriod.StartHour * 60 + timePeriod.StartMinute;
+                int endTime = timePeriod.EndHour * 60 + timePeriod.EndMinute;
+                
+                for (var idx = startTime; idx < endTime; idx++)
+                {
+                    allUnits[idx].TryValidateFace(timePeriod.ClockFaceId);
+                }
+            }
+
+            var cursorStart = -1;
+            var cursorEnd = -1;
+
+            for (int idx = 0; idx < allUnits.Count; idx++)
+            {
+                var unit = allUnits[idx];
+
+                if (unit.IsValid && cursorEnd != -1)
+                {
+                    validationFailures.Add(new ValidationFailure()
+                    {
+                        ClockFaces = unit.ClockFacesPresent,
+                        DayOfWeek = dayOfWeek,
+                        EndHour = (int) Math.Floor(cursorEnd / 60.0),
+                        EndMinute = cursorEnd % 60,
+                        StartHour = (int) Math.Floor(cursorStart / 60.0),
+                        StartMinute = cursorStart % 60,
+                    });
+
+                    cursorStart = -1;
+                    cursorEnd = -1;
+                }
+                
+                if (!allUnits[idx].IsValid)
+                {
+                    if (cursorStart == -1)
+                    {
+                        cursorStart = idx;
+                    }
+
+                    cursorEnd = idx;
+                }
+            }
+        }
+
+        return new ValidationResponse()
+        {
+            ValidationFailures = validationFailures,
+        };
     }
 }
