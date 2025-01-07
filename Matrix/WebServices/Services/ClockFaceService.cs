@@ -207,7 +207,7 @@ public class ClockFaceService : IClockFaceService
                 {
                     validationFailures.Add(new ValidationFailure()
                     {
-                        ClockFaces = unit.ClockFacesPresent,
+                        ClockFaces = allUnits[idx - 1].ClockFacesPresent,
                         DayOfWeek = dayOfWeek,
                         EndHour = (int) Math.Floor(cursorEnd / 60.0),
                         EndMinute = cursorEnd % 60,
@@ -228,6 +228,19 @@ public class ClockFaceService : IClockFaceService
 
                     cursorEnd = idx;
                 }
+            }
+
+            if (cursorStart != -1 && cursorEnd != -1)
+            {
+                validationFailures.Add(new ValidationFailure()
+                {
+                    ClockFaces = allUnits[_minutesInDay - 1].ClockFacesPresent,
+                    DayOfWeek = dayOfWeek,
+                    EndHour = (int) Math.Floor(cursorEnd / 60.0),
+                    EndMinute = cursorEnd % 60,
+                    StartHour = (int) Math.Floor(cursorStart / 60.0),
+                    StartMinute = cursorStart % 60,
+                });
             }
         }
 

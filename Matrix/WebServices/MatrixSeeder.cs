@@ -293,7 +293,7 @@ public class MatrixSeeder
                     },
                     StartHour = 0,
                     StartMinute = 0,
-                    EndHour = 8,
+                    EndHour = 7,
                     EndMinute = 0,
                 },
                 new TimePeriod()

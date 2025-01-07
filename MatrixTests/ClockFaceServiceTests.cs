@@ -1,5 +1,7 @@
+using System.Text;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
+using Matrix.Data.Models.TimeValidation;
 using Matrix.Data.Types;
 using Matrix.WebServices;
 using Matrix.WebServices.Services;
@@ -31,7 +33,7 @@ public class ClockFaceServiceTests : MatrixTestBase
         SeedClockFaces(_matrixContext);
         
         // Act
-        var activeFaces = await _clockFaceService.GetAllClockFaces(SearchFilter.Active);
+        var activeFaces = await _clockFaceService.GetAllClockFaces();
         
         // Assert
         Assert.That(activeFaces.Count, Is.EqualTo(1));
@@ -101,7 +103,7 @@ public class ClockFaceServiceTests : MatrixTestBase
 
         var newName = "Updated Name";
         var clockFace = await _clockFaceService.GetClockFace(ActiveFaceId);
-        clockFace!.Name = newName;
+        clockFace.Name = newName;
         
         // Act
         var updateResult = await _clockFaceService.UpdateClockFace(ActiveFaceId, clockFace);
@@ -120,7 +122,7 @@ public class ClockFaceServiceTests : MatrixTestBase
 
         var updatedText = "Changed Text";
         var clockFace = await _clockFaceService.GetClockFace(ActiveFaceId);
-        clockFace!.TextLines = new List<TextLine>()
+        clockFace.TextLines = new List<TextLine>()
         {
             new TextLine()
             {
@@ -150,7 +152,7 @@ public class ClockFaceServiceTests : MatrixTestBase
         SeedClockFaces(_matrixContext);
 
         var clockFace = await _clockFaceService.GetClockFace(ActiveFaceId);
-        clockFace!.TimePeriods = new List<TimePeriod>()
+        clockFace.TimePeriods = new List<TimePeriod>()
         {
             new TimePeriod()
             {
@@ -166,7 +168,7 @@ public class ClockFaceServiceTests : MatrixTestBase
         
         // Act
         var updateResult = await _clockFaceService.UpdateClockFace(ActiveFaceId, clockFace);
-        var timePeriod = updateResult?.TimePeriods.First();
+        var timePeriod = updateResult.TimePeriods.First();
         
         // Assert
         Assert.NotNull(updateResult);
@@ -186,7 +188,7 @@ public class ClockFaceServiceTests : MatrixTestBase
     [Test]
     public void UpdateClockFace_NonExistent()
     {
-        Assert.ThrowsAsync<MatrixEntityNotFoundException>(() => _clockFaceService.UpdateClockFace(-1, null));
+        Assert.ThrowsAsync<MatrixEntityNotFoundException>(() => _clockFaceService.UpdateClockFace(-1, new ClockFace()));
     }
 
     [Test]
@@ -281,5 +283,335 @@ public class ClockFaceServiceTests : MatrixTestBase
     public void RestoreClockFace_NonExistent()
     {
         Assert.ThrowsAsync<MatrixEntityNotFoundException>(() => _clockFaceService.RestoreClockFace(-1));
+    }
+
+    [Test]
+    public async Task ValidateClockFaces_Single_Success()
+    {
+        // Arrange
+        var clockFace = new ClockFace()
+        {
+            Name = "solo",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = TimePeriod.Everyday,
+                    StartHour = 0,
+                    StartMinute = 0,
+                    EndHour = 24,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        await _matrixContext.AddAsync(clockFace);
+        await _matrixContext.SaveChangesAsync();
+        
+        // Act
+        var validation = await _clockFaceService.ValidateClockFaceTimePeriods();
+        
+        // Assert
+        Assert.True(validation.SuccessfullyValidated);
+    }
+
+    [Test]
+    public async Task ValidateClockFaces_Multiple_Success()
+    {
+        // Arrange
+        var clockFace1 = new ClockFace()
+        {
+            Name = "face1",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = TimePeriod.Everyday,
+                    StartHour = 0,
+                    StartMinute = 0,
+                    EndHour = 12,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        var clockFace2 = new ClockFace()
+        {
+            Name = "face2",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = TimePeriod.Everyday,
+                    StartHour = 12,
+                    StartMinute = 0,
+                    EndHour = 24,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        await _matrixContext.AddRangeAsync(clockFace1, clockFace2);
+        await _matrixContext.SaveChangesAsync();
+        
+        // Act
+        var validation = await _clockFaceService.ValidateClockFaceTimePeriods();
+        
+        // Assert
+        Assert.True(validation.SuccessfullyValidated);
+    }
+
+    [Test]
+    public async Task ValidateClockFaces_MissingTime_Failure()
+    {
+        // Arrange
+        var clockFace = new ClockFace()
+        {
+            Name = "solo",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = TimePeriod.Everyday,
+                    StartHour = 0,
+                    StartMinute = 0,
+                    EndHour = 23,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        await _matrixContext.AddAsync(clockFace);
+        await _matrixContext.SaveChangesAsync();
+        
+        // Act
+        var validation = await _clockFaceService.ValidateClockFaceTimePeriods();
+        
+        // Assert
+        Assert.False(validation.SuccessfullyValidated);
+        Assert.That(validation.ValidationFailures?.Count, Is.EqualTo(7)); // one per day
+        validation.ValidationFailures?.ForEach(failure =>
+        {
+            Assert.That(failure.StartHour, Is.EqualTo(23));
+            Assert.That(failure.StartMinute, Is.EqualTo(0));
+            Assert.That(failure.EndHour, Is.EqualTo(23));
+            Assert.That(failure.EndMinute, Is.EqualTo(59));
+            Assert.False(failure.TooManyFacesConfigured);
+        });
+        
+        Console.WriteLine(FormatValidationResponse(validation));
+    }
+
+    [Test]
+    public async Task ValidateClockFaces_MissingDay_Failure()
+    {
+        // Arrange
+        var clockFace = new ClockFace()
+        {
+            Name = "solo",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = TimePeriod.Everyday.Where(day => day != DayOfWeek.Sunday).ToList(),
+                    StartHour = 0,
+                    StartMinute = 0,
+                    EndHour = 24,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        await _matrixContext.AddAsync(clockFace);
+        await _matrixContext.SaveChangesAsync();
+        
+        // Act
+        var validation = await _clockFaceService.ValidateClockFaceTimePeriods();
+        
+        // Assert
+        Assert.False(validation.SuccessfullyValidated);
+        Assert.That(validation.ValidationFailures?.Count, Is.EqualTo(1)); // one per day
+        validation.ValidationFailures?.ForEach(vf => Assert.False(vf.TooManyFacesConfigured));
+        
+        Console.WriteLine(FormatValidationResponse(validation));
+    }
+
+    [Test]
+    public async Task ValidateClockFaces_Overlap_Failure()
+    {
+        // Arrange
+        var clockFace1 = new ClockFace()
+        {
+            Name = "face1",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = TimePeriod.Everyday,
+                    StartHour = 0,
+                    StartMinute = 0,
+                    EndHour = 24,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        var clockFace2 = new ClockFace()
+        {
+            Name = "face2",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = TimePeriod.Everyday,
+                    StartHour = 12,
+                    StartMinute = 0,
+                    EndHour = 24,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        await _matrixContext.AddRangeAsync(clockFace1, clockFace2);
+        await _matrixContext.SaveChangesAsync();
+        
+        // Act
+        var validation = await _clockFaceService.ValidateClockFaceTimePeriods();
+        
+        // Assert
+        Assert.False(validation.SuccessfullyValidated);
+        Assert.That(validation.ValidationFailures?.Count, Is.EqualTo(7)); // one per day
+        validation.ValidationFailures?.ForEach(failure =>
+        {
+            Assert.That(failure.StartHour, Is.EqualTo(12));
+            Assert.That(failure.StartMinute, Is.EqualTo(0));
+            Assert.That(failure.EndHour, Is.EqualTo(23));
+            Assert.That(failure.EndMinute, Is.EqualTo(59));
+            Assert.True(failure.TooManyFacesConfigured);
+        });
+        
+        Console.WriteLine(FormatValidationResponse(validation));
+    }
+
+    [Test]
+    public async Task ValidateClockFaces_All_Scenarios()
+    {
+        // Arrange
+        var clockFace1 = new ClockFace()
+        {
+            Name = "face1",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = TimePeriod.Everyday,
+                    StartHour = 0,
+                    StartMinute = 0,
+                    EndHour = 23,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        var clockFace2 = new ClockFace()
+        {
+            Name = "face2",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = new List<DayOfWeek>()
+                    {
+                        DayOfWeek.Monday,
+                        DayOfWeek.Tuesday,
+                        DayOfWeek.Wednesday,
+                        DayOfWeek.Thursday,
+                        DayOfWeek.Friday
+                    },
+                    StartHour = 23,
+                    StartMinute = 0,
+                    EndHour = 24,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        var clockFace3 = new ClockFace()
+        {
+            Name = "face3",
+            TimePeriods = new List<TimePeriod>()
+            {
+                new TimePeriod()
+                {
+                    DaysOfWeek = new List<DayOfWeek>()
+                    {
+                        DayOfWeek.Saturday,
+                        DayOfWeek.Sunday
+                    },
+                    StartHour = 0,
+                    StartMinute = 0,
+                    EndHour = 12,
+                    EndMinute = 0,
+                }
+            },
+            TextLines = new List<TextLine>()
+        };
+        
+        await _matrixContext.AddRangeAsync(clockFace1, clockFace2, clockFace3);
+        await _matrixContext.SaveChangesAsync();
+        
+        // Act
+        var validation = await _clockFaceService.ValidateClockFaceTimePeriods();
+        
+        // Assert
+        Assert.False(validation.SuccessfullyValidated);
+        Assert.That(validation.ValidationFailures?.Count, Is.EqualTo(4));
+        Assert.That(validation.ValidationFailures.Count(f => f.DayOfWeek == DayOfWeek.Saturday), Is.EqualTo(2));
+        Assert.That(validation.ValidationFailures.Count(f => f.DayOfWeek == DayOfWeek.Sunday), Is.EqualTo(2));
+        Assert.That(validation.ValidationFailures.Count(f => f.TooManyFacesConfigured), Is.EqualTo(2));
+        Assert.That(validation.ValidationFailures.Count(f => !f.TooManyFacesConfigured), Is.EqualTo(2));
+        foreach (var validationFailure in validation.ValidationFailures.Where(v => v.TooManyFacesConfigured))
+        {
+            Assert.That(validationFailure.StartHour, Is.EqualTo(0));
+            Assert.That(validationFailure.StartMinute, Is.EqualTo(0));
+            Assert.That(validationFailure.EndHour, Is.EqualTo(11));
+            Assert.That(validationFailure.EndMinute, Is.EqualTo(59));
+            Assert.NotNull(validationFailure.ClockFaces);
+            Assert.That(validationFailure.ClockFaces.Contains(1));
+            Assert.That(validationFailure.ClockFaces.Contains(3));
+        }
+        
+        Console.WriteLine(FormatValidationResponse(validation));
+    }
+
+    private string FormatValidationResponse(ValidationResponse validationResponse)
+    {
+        var stringBuilder = new StringBuilder();
+        stringBuilder.AppendLine($"Overall Validation: {(validationResponse.SuccessfullyValidated ? "Valid" : "Invalid")}\n");
+
+        if (validationResponse.ValidationFailures != null)
+        {
+            foreach (var failure in validationResponse.ValidationFailures)
+            {
+                var clockFaceNames = _matrixContext.ClockFace.ToDictionary(cf => cf.Id, cf => cf.Name);
+                var faceNames = failure.ClockFaces?.Select(faceId => clockFaceNames[faceId]).ToList() ?? new List<string>();
+        
+                stringBuilder.AppendLine($"Day: {failure.DayOfWeek.ToString()}");
+                stringBuilder.AppendLine($"Start: {failure.StartHour}:{failure.StartMinute:D2}");
+                stringBuilder.AppendLine($"End: {failure.EndHour}:{failure.EndMinute:D2}");
+                stringBuilder.AppendLine($"Clock faces present: {string.Join(", ", faceNames)}\n");
+            }
+        }
+
+        return stringBuilder.ToString();
     }
 }
