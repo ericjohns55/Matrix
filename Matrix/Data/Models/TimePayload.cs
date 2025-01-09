@@ -15,4 +15,16 @@ public class TimePayload
     {
         return $"{DayOfWeek.ToString()} - {Hour}:{Minute:D2}";
     }
+
+    public static TimePayload Now()
+    {
+        var time = DateTime.Now;
+
+        return new TimePayload()
+        {
+            Hour = time.Hour,
+            Minute = time.Minute,
+            DayOfWeek = time.DayOfWeek
+        };
+    }
 }

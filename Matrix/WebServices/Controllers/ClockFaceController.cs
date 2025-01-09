@@ -31,7 +31,7 @@ public class ClockFaceController : MatrixBaseController
     }
 
     [HttpPost("at")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<int>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ClockFace>))]
     public async Task<IActionResult> GetClockFaceForTime([FromBody] TimePayload timePayload)
     {
         return Ok(await ExecuteToMatrixResponseAsync(() =>

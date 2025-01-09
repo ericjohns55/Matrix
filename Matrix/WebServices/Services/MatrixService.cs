@@ -25,8 +25,8 @@ public class MatrixService : IMatrixService
         {
             using (var weatherClient = new WeatherClient(weatherUrl))
             {
-                var weatherData = await weatherClient.GetWeather();
-                ProgramState.UpdateVariables(weatherData);
+                ProgramState.Weather = await weatherClient.GetWeather();
+                ProgramState.UpdateVariables();
             }
         }
 

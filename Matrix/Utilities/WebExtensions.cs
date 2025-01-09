@@ -81,4 +81,11 @@ public static class WebExtensions
             return t.Result;
         }, TaskContinuationOptions.ExecuteSynchronously);
     }
+
+    public static TResult WaitForCompletion<TResult>(this Task<TResult> task)
+    {
+        task.Wait();
+        CheckTaskSuccess(task, null, null);
+        return task.Result;
+    }
 }

@@ -14,6 +14,8 @@ public class ProgramState
 
     public static MatrixTimer? Timer { get; set; }
 
+    public static WeatherModel? Weather { get; set; }
+
     public static void RestorePreviousState(MatrixState currentState)
     {
         State = PreviousState;
@@ -49,8 +51,8 @@ public class ProgramState
         return false;
     }
 
-    public static void UpdateVariables(WeatherModel weather)
+    public static void UpdateVariables()
     {
-        CurrentVariables = VariableUtility.BuildVariableDictionary(weather, ProgramState.Timer);
+        CurrentVariables = VariableUtility.BuildVariableDictionary(Weather, Timer);
     }
 }

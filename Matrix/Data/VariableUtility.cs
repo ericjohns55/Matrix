@@ -59,7 +59,7 @@ public class VariableUtility
         return stringBuilder.ToString();
     }
     
-    public static Dictionary<string, string> BuildVariableDictionary(WeatherModel weatherData, MatrixTimer? timer = null)
+    public static Dictionary<string, string> BuildVariableDictionary(WeatherModel? weatherData = null, MatrixTimer? timer = null)
     {
         var variablesDictionary = new Dictionary<string, string>();
         
@@ -71,15 +71,6 @@ public class VariableUtility
         variablesDictionary.Add(VariableConstants.Hour24Variable, time.Hour.ToString());
         variablesDictionary.Add(VariableConstants.AmPmVariable, time.Hour < 12 ? "AM" : "PM");
         variablesDictionary.Add(VariableConstants.TimeFormattedVariable, ParseTime(time, false));
-        variablesDictionary.Add(VariableConstants.TempVariable, weatherData.Temp.ToString(CultureInfo.CurrentCulture));
-        variablesDictionary.Add(VariableConstants.TempLowVariable, weatherData.TempLow.ToString(CultureInfo.CurrentCulture));
-        variablesDictionary.Add(VariableConstants.TempHighVariable, weatherData.TempHigh.ToString(CultureInfo.CurrentCulture));
-        variablesDictionary.Add(VariableConstants.TempFeelVariable, weatherData.RealFeel.ToString(CultureInfo.CurrentCulture));
-        variablesDictionary.Add(VariableConstants.WindSpeedVariable, weatherData.WindSpeed.ToString(CultureInfo.CurrentCulture));
-        variablesDictionary.Add(VariableConstants.HumidityVariable, weatherData.Humidity.ToString(CultureInfo.CurrentCulture));
-        variablesDictionary.Add(VariableConstants.ForecastCurrentVariable, weatherData.CurrentForecast);
-        variablesDictionary.Add(VariableConstants.ForecastCurrentShortVariable, weatherData.CurrentForecastShort);
-        variablesDictionary.Add(VariableConstants.ForecastDay, weatherData.DayForecast);
         variablesDictionary.Add(VariableConstants.FormattedDateVariable, ParseDate(time));
         variablesDictionary.Add(VariableConstants.MonthNameVariable, CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(time.Month));
         variablesDictionary.Add(VariableConstants.DayNameVariable, time.DayOfWeek.ToString());
@@ -91,6 +82,19 @@ public class VariableUtility
         variablesDictionary.Add(VariableConstants.TimerMinuteVariable, timer?.Minute.ToString() ?? "-1");
         variablesDictionary.Add(VariableConstants.TimerSecondVariable, timer?.Second.ToString() ?? "-1");
         variablesDictionary.Add(VariableConstants.TimerFormattedVariable, ParseTimer(timer));
+
+        if (weatherData != null)
+        {
+            variablesDictionary.Add(VariableConstants.TempVariable, weatherData.Temp.ToString(CultureInfo.CurrentCulture));
+            variablesDictionary.Add(VariableConstants.TempLowVariable, weatherData.TempLow.ToString(CultureInfo.CurrentCulture));
+            variablesDictionary.Add(VariableConstants.TempHighVariable, weatherData.TempHigh.ToString(CultureInfo.CurrentCulture));
+            variablesDictionary.Add(VariableConstants.TempFeelVariable, weatherData.RealFeel.ToString(CultureInfo.CurrentCulture));
+            variablesDictionary.Add(VariableConstants.WindSpeedVariable, weatherData.WindSpeed.ToString(CultureInfo.CurrentCulture));
+            variablesDictionary.Add(VariableConstants.HumidityVariable, weatherData.Humidity.ToString(CultureInfo.CurrentCulture));
+            variablesDictionary.Add(VariableConstants.ForecastCurrentVariable, weatherData.CurrentForecast);
+            variablesDictionary.Add(VariableConstants.ForecastCurrentShortVariable, weatherData.CurrentForecastShort);
+            variablesDictionary.Add(VariableConstants.ForecastDay, weatherData.DayForecast);
+        }
         
         return variablesDictionary;
     }

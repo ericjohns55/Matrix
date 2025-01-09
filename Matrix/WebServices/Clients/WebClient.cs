@@ -3,6 +3,7 @@ using System.Text;
 using System.Web;
 using Matrix.Data.Exceptions;
 using Matrix.Utilities;
+using Matrix.WebServices.Authentication;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -20,7 +21,7 @@ public class WebClient : IDisposable
         _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<WebClient>();
         _httpClient = new HttpClient();
         
-        var encodedKey = Encoding.UTF8.GetBytes(MatrixServer.ApiKey);
+        var encodedKey = Encoding.UTF8.GetBytes(ApiKeyHelper.ApiKey);
         var base64Key = Convert.ToBase64String(encodedKey);
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {base64Key}");
     }

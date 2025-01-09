@@ -9,20 +9,13 @@ namespace Matrix.WebServices;
 
 public static class MatrixServer
 {
-    public static string ApiKey = "test-key";
-    
     public static async Task<WebApplication> CreateWebServer(string[] args, IConfigurationRoot configuration)
     {
-        string dataFolderPath = Path.Combine(Environment.CurrentDirectory, "Data");
-        
         string databasePath = Path.Combine(Environment.CurrentDirectory, "Data", "matrix.db");
         if (!string.IsNullOrWhiteSpace(configuration[ConfigConstants.DatabasePath]))
         {
             databasePath = configuration[ConfigConstants.DatabasePath]!;
         }
-
-        string apiKeyPath = Path.Combine(dataFolderPath, "api_key");
-        ApiKey = await LoadOrGenerateApiKey(apiKeyPath);
         
         var builder = WebApplication.CreateBuilder(args);
         var services = builder.Services;

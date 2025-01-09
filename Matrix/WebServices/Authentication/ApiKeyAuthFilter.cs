@@ -1,4 +1,5 @@
 using System.Text;
+using Matrix.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -18,7 +19,7 @@ public class ApiKeyAuthFilter : Attribute, IAuthorizationFilter
                 {
                     var apiKey = Encoding.UTF8.GetString(Convert.FromBase64String(keyFromHeader));
 
-                    if (apiKey != MatrixServer.ApiKey)
+                    if (apiKey != ApiKeyHelper.ApiKey)
                     {
                         context.Result = new UnauthorizedObjectResult("Invalid API Key");
                     }

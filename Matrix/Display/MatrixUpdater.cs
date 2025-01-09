@@ -2,7 +2,9 @@ using Matrix.Data;
 using Matrix.Data.Utilities;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
+using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
+using Matrix.Utilities;
 using Matrix.WebServices.Clients;
 // using RPiRgbLEDMatrix;
 
@@ -12,6 +14,9 @@ namespace Matrix.Display;
 
 public class MatrixUpdater : IDisposable
 {
+    public static int MatrixWidth = 0;
+    public static int MatrixHeight = 0;
+    
     public MatrixClient MatrixClient;
     public WeatherClient? WeatherClient;
     public ClockFace? ClockFace { get; set; }
@@ -29,8 +34,6 @@ public class MatrixUpdater : IDisposable
 
     public MatrixUpdater(IConfiguration matrixSettings)
     {
-        ClockFace = new ClockFace();
-        
         if (!int.TryParse(matrixSettings[ConfigConstants.UpdateInterval], out _updateInterval))
         {
             throw new ConfigurationException("Could not parse UpdateInterval");
@@ -64,11 +67,14 @@ public class MatrixUpdater : IDisposable
 
         try
         {
+            MatrixWidth = matrixSettings.GetValue<int>(ConfigConstants.Columns);
+            MatrixHeight = matrixSettings.GetValue<int>(ConfigConstants.Rows);
+            
             // var options = new RGBLedMatrixOptions()
             // {
             //     HardwareMapping = matrixSettings[ConfigConstants.HardwareMapping],
-            //     Rows = matrixSettings.GetValue<int>(ConfigConstants.Rows),
-            //     Cols =  matrixSettings.GetValue<int>(ConfigConstants.Columns),
+            //     Rows = MatrixHeight,
+            //     Cols =  MatrixWidth,
             //     ChainLength = matrixSettings.GetValue<int>(ConfigConstants.ChainLength),
             //     Parallel = matrixSettings.GetValue<int>(ConfigConstants.Parallel),
             //     Brightness = matrixSettings.GetValue<int>(ConfigConstants.Brightness),
@@ -92,11 +98,36 @@ public class MatrixUpdater : IDisposable
 
     public void HandleUpdateLoop(DateTime now)
     {
+        if (ProgramState.State == MatrixState.Clock || ProgramState.State == MatrixState.Timer)
+        {
+            // update weather every 5 minutes; 10 seconds before next minutely update
+            if ((now.Minute + 1) % 5 == 0 && now.Second == 50)
+            {
+                Console.WriteLine("Updating weather");
+                ProgramState.Weather = WeatherClient?.GetWeather().WaitForCompletion() ?? WeatherModel.Empty;
+            }
+
+            // update clock face 10 seconds before each minute ends
+            if (now.Second == 50)
+            {
+                var nextMinute = DateTime.Now.AddMinutes(1);
+                
+                ClockFace = MatrixClient.GetClockFaceForTime(new TimePayload()
+                {
+                    Hour = nextMinute.Hour,
+                    Minute = nextMinute.Minute,
+                    DayOfWeek = now.DayOfWeek
+                }).WaitForCompletion();
+            }
+        }
+        
         if (!ProgramState.NeedsUpdate(now, ClockFace))
         {
             return;
         }
 
+        ProgramState.UpdateVariables();
+        
         ProgramState.UpdateNextTick = false;
         
         // _offscreenCanvas.Clear();
@@ -144,6 +175,10 @@ public class MatrixUpdater : IDisposable
 
     private void UpdateClock(DateTime time)
     {
+        if (ClockFace != null)
+        {
+            var textLines = ClockFace.TextLines;
+        }
         // var color = new RPiRgbLEDMatrix.Color(128, 0, 0);
         // _offscreenCanvas.DrawText(_font, 10, 10, color, DateTime.Now.ToString("HH:mm:ss"));
         

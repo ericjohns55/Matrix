@@ -2,6 +2,7 @@ using Matrix.Data;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Display;
+using Matrix.Utilities;
 using Matrix.WebServices;
 
 namespace Matrix;
@@ -18,6 +19,8 @@ public class MatrixMain
             .SetBasePath(Path.Combine(Environment.CurrentDirectory, "Data"))
             .AddJsonFile("matrix_settings.json")
             .Build();
+
+        await ApiKeyHelper.LoadOrGenerateApiKey();
 
         try
         {
@@ -41,8 +44,10 @@ public class MatrixMain
         
         using (MatrixUpdater)
         {
-            var weather = await MatrixUpdater.WeatherClient?.GetWeather()!;
-            ProgramState.UpdateVariables(weather);
+            MatrixUpdater.ClockFace = await MatrixUpdater.MatrixClient.GetClockFaceForTime(TimePayload.Now());
+            
+            ProgramState.Weather = await MatrixUpdater.WeatherClient?.GetWeather()!;
+            ProgramState.UpdateVariables();
             
             int previousSecond = -1;
             while (_matrixLoopRunning)
