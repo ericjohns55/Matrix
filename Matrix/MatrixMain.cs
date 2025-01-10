@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Matrix.Data;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
@@ -19,9 +20,9 @@ public class MatrixMain
             .SetBasePath(Path.Combine(Environment.CurrentDirectory, "Data"))
             .AddJsonFile("matrix_settings.json")
             .Build();
-
+        
         await ApiKeyHelper.LoadOrGenerateApiKey();
-
+        
         try
         {
             MatrixUpdater = new MatrixUpdater(configuration);
@@ -31,14 +32,14 @@ public class MatrixMain
             await Console.Error.WriteLineAsync($"Could not parse configuration.\n{ex.Message}");
             return;
         }
-
+        
         Console.CancelKeyPress += (_, eventArgs) =>
         {
             _matrixLoopRunning = false;
             eventArgs.Cancel = true;
         };
         
-        WebApplication webApp = await MatrixServer.CreateWebServer(args, configuration);
+        WebApplication webApp = await MatrixServer.CreateWebServer(args, configuration, MatrixUpdater.FontsPath);
         Thread thread = new Thread(() => webApp.Run(MatrixUpdater.GetServerUrl()));
         thread.Start();
         

@@ -20,10 +20,10 @@ public class MatrixUpdater : IDisposable
     public MatrixClient MatrixClient;
     public WeatherClient? WeatherClient;
     public ClockFace? ClockFace { get; set; }
+    public string FontsPath { get; init; }
 
     private readonly int _updateInterval;
     private readonly int _timerBlinkCount;
-    private readonly string _fontsPath;
     private readonly string _weatherUrl;
     private readonly string _serverUrl;
 
@@ -59,10 +59,7 @@ public class MatrixUpdater : IDisposable
 
         if (!string.IsNullOrWhiteSpace(matrixSettings[ConfigConstants.FontsFolder]))
         {
-            _fontsPath = matrixSettings[ConfigConstants.FontsFolder]!;
-            
-            var fontPath = Path.Combine(_fontsPath, "6x12.bdf");
-            // _font = new RGBLedFont(fontPath);
+            FontsPath = matrixSettings[ConfigConstants.FontsFolder]!;
         }
 
         try
@@ -135,7 +132,7 @@ public class MatrixUpdater : IDisposable
         switch (ProgramState.State)
         {
             case MatrixState.Clock:
-                UpdateClock(now);
+                UpdateClock();
                 break;
             case MatrixState.Timer:
                 UpdateTimer();
@@ -173,17 +170,16 @@ public class MatrixUpdater : IDisposable
         }
     }
 
-    private void UpdateClock(DateTime time)
+    private void UpdateClock()
     {
         if (ClockFace != null)
         {
-            var textLines = ClockFace.TextLines;
+            Console.WriteLine($"Clock face name: {ClockFace.Name}");
+            ClockFace.TextLines.ForEach(textLine => Console.WriteLine(TextLineParser.ParseTextLine(textLine)));
         }
         // var color = new RPiRgbLEDMatrix.Color(128, 0, 0);
         // _offscreenCanvas.DrawText(_font, 10, 10, color, DateTime.Now.ToString("HH:mm:ss"));
         
-        // TODO: check for clock face changes
-        Console.WriteLine(VariableUtility.ParseTime(time));
     }
 
     public void Dispose()

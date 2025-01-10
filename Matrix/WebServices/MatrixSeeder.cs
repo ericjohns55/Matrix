@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Matrix.Data.Models;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
@@ -16,7 +17,7 @@ public class MatrixSeeder
         _logger = new LoggerFactory().CreateLogger<MatrixSeeder>();
     }
 
-    public async Task Seed(bool drop)
+    public async Task Seed(bool drop, string? fontsPath = null)
     {
         _logger.LogInformation("Seeding matrix ...");
         if (drop)
@@ -53,13 +54,26 @@ public class MatrixSeeder
         
         _logger.LogInformation("Seeding fonts...");
         
-        var small = new MatrixFont() { Name = "5x8", FileLocation = "placeholder" };
-        var medium = new MatrixFont() { Name = "6x9", FileLocation = "placeholder" };
-        var large = new MatrixFont() { Name = "8x13", FileLocation = "placeholder" };
-        var largeBold = new MatrixFont() { Name = "8x13B", FileLocation = "placeholder" };
+        if (fontsPath != null)
+        {
+            var regex = new Regex("/[0-9]+[xX][0-9]*[BO]{0,1}");
 
-        await _matrixContext.AddRangeAsync(small, medium, large, largeBold);
-        await _matrixContext.SaveChangesAsync();
+            var fontsInFolder = Directory.GetFiles(fontsPath, "*.bdf", SearchOption.AllDirectories)
+                .Where(filePath => regex.IsMatch(filePath))
+                .Select(filePath => new MatrixFont()
+                {
+                    Name = filePath.Substring(fontsPath.Length + 1).Replace(".bdf", string.Empty),
+                    FileLocation = filePath
+                })
+                .ToList();
+            
+            await _matrixContext.AddRangeAsync(fontsInFolder);
+            await _matrixContext.SaveChangesAsync();
+        }
+        
+        var fontSmall = _matrixContext.MatrixFont.Single(font => font.Name == "5x8");
+        var fontMedium = _matrixContext.MatrixFont.Single(font => font.Name == "6x9");
+        var fontLarge = _matrixContext.MatrixFont.Single(font => font.Name == "8x13B");
         
         _logger.LogInformation("Seeding clock faces ...");
         var dayFace = new ClockFace()
@@ -104,7 +118,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 8,
                     Color = purple,
-                    Font = small
+                    Font = fontSmall
                 },
                 new TextLine()
                 {
@@ -113,7 +127,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 16,
                     Color = purple,
-                    Font = small
+                    Font = fontSmall
                 },
                 new TextLine()
                 {
@@ -122,7 +136,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 30,
                     Color = red,
-                    Font = largeBold
+                    Font = fontLarge
                 },
                 new TextLine()
                 {
@@ -131,7 +145,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 42,
                     Color = blue,
-                    Font = medium
+                    Font = fontMedium
                 },
                 new TextLine()
                 {
@@ -140,7 +154,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 42,
                     Color = blue,
-                    Font = medium
+                    Font = fontMedium
                 },
                 new TextLine()
                 {
@@ -149,7 +163,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 51,
                     Color = blue,
-                    Font = medium
+                    Font = fontMedium
                 },
                 new TextLine()
                 {
@@ -158,7 +172,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 60,
                     Color = blue,
-                    Font = medium
+                    Font = fontMedium
                 }
             }
         };
@@ -217,7 +231,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 8,
                     Color = red,
-                    Font = small
+                    Font = fontSmall
                 },
                 new TextLine()
                 {
@@ -226,7 +240,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 16,
                     Color = red,
-                    Font = small
+                    Font = fontSmall
                 },
                 new TextLine()
                 {
@@ -235,7 +249,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 30,
                     Color = red,
-                    Font = largeBold
+                    Font = fontLarge
                 },
                 new TextLine()
                 {
@@ -244,7 +258,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 42,
                     Color = red,
-                    Font = medium
+                    Font = fontMedium
                 },
                 new TextLine()
                 {
@@ -253,7 +267,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 42,
                     Color = red,
-                    Font = medium
+                    Font = fontMedium
                 },
                 new TextLine()
                 {
@@ -262,7 +276,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 51,
                     Color = red,
-                    Font = medium
+                    Font = fontMedium
                 },
                 new TextLine()
                 {
@@ -271,7 +285,7 @@ public class MatrixSeeder
                     YPositioning = Positioning.YPositioning.Absolute,
                     YLocation = 60,
                     Color = red,
-                    Font = medium
+                    Font = fontMedium
                 }
             }
         };
@@ -323,7 +337,7 @@ public class MatrixSeeder
                         Green = 0,
                         Blue = 0
                     },
-                    Font = largeBold
+                    Font = fontLarge
                 }
             }
         };

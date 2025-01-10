@@ -14,4 +14,8 @@ public class MatrixFont
     
     [MaxLength(512)]
     public string FileLocation { get; set; }
+
+    public int Width => int.Parse(Name.Split('x')[0].Where(c => char.IsDigit(c)).ToArray());
+    
+    public int Height => int.Parse(Name.Split('x')[1].Where(c => char.IsDigit(c)).ToArray());
 }

@@ -9,7 +9,7 @@ namespace Matrix.WebServices;
 
 public static class MatrixServer
 {
-    public static async Task<WebApplication> CreateWebServer(string[] args, IConfigurationRoot configuration)
+    public static async Task<WebApplication> CreateWebServer(string[] args, IConfigurationRoot configuration, string? fontsPath = null)
     {
         string databasePath = Path.Combine(Environment.CurrentDirectory, "Data", "matrix.db");
         if (!string.IsNullOrWhiteSpace(configuration[ConfigConstants.DatabasePath]))
@@ -60,7 +60,7 @@ public static class MatrixServer
             if (configuration.GetValue<bool>(ConfigConstants.RunSeedOnStart))
             {
                 MatrixSeeder seeder = new MatrixSeeder(context);
-                await seeder.Seed(configuration.GetValue<bool>(ConfigConstants.SeedDrop));
+                await seeder.Seed(configuration.GetValue<bool>(ConfigConstants.SeedDrop), fontsPath);
             }
         }
 
