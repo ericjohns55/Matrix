@@ -59,7 +59,7 @@ public class MatrixController  : Controller
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ClockFace))]
     public IActionResult GetCurrentClockFace()
     {
-        return Ok(MatrixMain.MatrixUpdater.ClockFace);
+        return Ok(MatrixMain.MatrixUpdater.CurrentClockFace);
     }
 
     [HttpPost("update")]

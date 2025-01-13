@@ -327,9 +327,10 @@ public class MatrixSeeder
             {
                 new TextLine()
                 {
-                    Text = VariableConstants.DayNameVariable,
+                    Text = $"{VariableConstants.HourVariable}:{VariableConstants.MinuteVariable}{VariableConstants.AmPmVariable}",
                     XPositioning = Positioning.XPositioning.Center,
-                    YPositioning = Positioning.YPositioning.Center,
+                    YPositioning = Positioning.YPositioning.Absolute,
+                    YLocation = 35,
                     Color = new MatrixColor()
                     {
                         Name = "Night Red",

@@ -6,20 +6,20 @@ using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
 using Matrix.Utilities;
 using Matrix.WebServices.Clients;
-// using RPiRgbLEDMatrix;
-
-using Color = System.Drawing.Color;
+using RPiRgbLEDMatrix;
 
 namespace Matrix.Display;
 
 public class MatrixUpdater : IDisposable
 {
+    public static ClockFace? OverridenClockFace { get; set; }
+
     public static int MatrixWidth = 0;
     public static int MatrixHeight = 0;
     
     public MatrixClient MatrixClient;
     public WeatherClient? WeatherClient;
-    public ClockFace? ClockFace { get; set; }
+    public ClockFace? CurrentClockFace { get; set; }
     public string FontsPath { get; init; }
 
     private readonly int _updateInterval;
@@ -27,10 +27,8 @@ public class MatrixUpdater : IDisposable
     private readonly string _weatherUrl;
     private readonly string _serverUrl;
 
-    // private readonly RGBLedMatrix _matrix;
-    // private readonly RGBLedCanvas _offscreenCanvas;
-
-    // private readonly RGBLedFont _font;
+    private readonly RGBLedMatrix _matrix;
+    private readonly RGBLedCanvas _offscreenCanvas;
 
     public MatrixUpdater(IConfiguration matrixSettings)
     {
@@ -67,21 +65,21 @@ public class MatrixUpdater : IDisposable
             MatrixWidth = matrixSettings.GetValue<int>(ConfigConstants.Columns);
             MatrixHeight = matrixSettings.GetValue<int>(ConfigConstants.Rows);
             
-            // var options = new RGBLedMatrixOptions()
-            // {
-            //     HardwareMapping = matrixSettings[ConfigConstants.HardwareMapping],
-            //     Rows = MatrixHeight,
-            //     Cols =  MatrixWidth,
-            //     ChainLength = matrixSettings.GetValue<int>(ConfigConstants.ChainLength),
-            //     Parallel = matrixSettings.GetValue<int>(ConfigConstants.Parallel),
-            //     Brightness = matrixSettings.GetValue<int>(ConfigConstants.Brightness),
-            //     LimitRefreshRateHz = matrixSettings.GetValue<int>(ConfigConstants.LimitRefreshRateHz),
-            //     DisableHardwarePulsing = matrixSettings.GetValue<bool>(ConfigConstants.DisableHardwarePulsing),
-            //     GpioSlowdown = matrixSettings.GetValue<int>(ConfigConstants.GpioSlowdown),
-            // };
-            //
-            // _matrix = new RGBLedMatrix(options);
-            // _offscreenCanvas = _matrix.CreateOffscreenCanvas();
+            var options = new RGBLedMatrixOptions()
+            {
+                HardwareMapping = matrixSettings[ConfigConstants.HardwareMapping],
+                Rows = MatrixHeight,
+                Cols =  MatrixWidth,
+                ChainLength = matrixSettings.GetValue<int>(ConfigConstants.ChainLength),
+                Parallel = matrixSettings.GetValue<int>(ConfigConstants.Parallel),
+                Brightness = matrixSettings.GetValue<int>(ConfigConstants.Brightness),
+                LimitRefreshRateHz = matrixSettings.GetValue<int>(ConfigConstants.LimitRefreshRateHz),
+                DisableHardwarePulsing = matrixSettings.GetValue<bool>(ConfigConstants.DisableHardwarePulsing),
+                GpioSlowdown = matrixSettings.GetValue<int>(ConfigConstants.GpioSlowdown),
+            };
+            
+            _matrix = new RGBLedMatrix(options);
+            _offscreenCanvas = _matrix.CreateOffscreenCanvas();
         }
         catch (Exception ex)
         {
@@ -109,7 +107,7 @@ public class MatrixUpdater : IDisposable
             {
                 var nextMinute = DateTime.Now.AddMinutes(1);
                 
-                ClockFace = MatrixClient.GetClockFaceForTime(new TimePayload()
+                CurrentClockFace = MatrixClient.GetClockFaceForTime(new TimePayload()
                 {
                     Hour = nextMinute.Hour,
                     Minute = nextMinute.Minute,
@@ -118,7 +116,7 @@ public class MatrixUpdater : IDisposable
             }
         }
         
-        if (!ProgramState.NeedsUpdate(now, ClockFace))
+        if (!ProgramState.NeedsUpdate(now, CurrentClockFace))
         {
             return;
         }
@@ -127,7 +125,7 @@ public class MatrixUpdater : IDisposable
         
         ProgramState.UpdateNextTick = false;
         
-        // _offscreenCanvas.Clear();
+        _offscreenCanvas.Clear();
         
         switch (ProgramState.State)
         {
@@ -147,7 +145,7 @@ public class MatrixUpdater : IDisposable
                 break;
         }
 
-        // _matrix.SwapOnVsync(_offscreenCanvas);
+        _matrix.SwapOnVsync(_offscreenCanvas);
     }
     
     private void UpdateTimer()
@@ -172,20 +170,28 @@ public class MatrixUpdater : IDisposable
 
     private void UpdateClock()
     {
-        if (ClockFace != null)
-        {
-            Console.WriteLine($"Clock face name: {ClockFace.Name}");
-            ClockFace.TextLines.ForEach(textLine => Console.WriteLine(TextLineParser.ParseTextLine(textLine)));
-        }
-        // var color = new RPiRgbLEDMatrix.Color(128, 0, 0);
-        // _offscreenCanvas.DrawText(_font, 10, 10, color, DateTime.Now.ToString("HH:mm:ss"));
+        var clockFaceForUpdate = ProgramState.OverrideClockFace ? OverridenClockFace : CurrentClockFace;
         
+        if (clockFaceForUpdate != null)
+        {
+            foreach (var textLine in clockFaceForUpdate.TextLines)
+            {
+                var parsedLine = TextLineParser.ParseTextLine(textLine, ProgramState.CurrentVariables);
+
+                _offscreenCanvas.DrawText(
+                    parsedLine.Font,
+                    parsedLine.XPosition,
+                    parsedLine.YPosition,
+                    parsedLine.Color,
+                    parsedLine.ParsedText);
+            }
+        }
     }
 
     public void Dispose()
     {
         MatrixClient.Dispose();
         WeatherClient?.Dispose();
-        // _matrix?.Dispose();
+        _matrix.Dispose();
     }
 }

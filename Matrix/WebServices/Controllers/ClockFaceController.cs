@@ -1,10 +1,11 @@
+using Matrix.Data;
 using Matrix.Data.Models;
 using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
+using Matrix.Display;
 using Matrix.WebServices.Authentication;
 using Matrix.WebServices.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Matrix.WebServices.Controllers;
@@ -36,6 +37,36 @@ public class ClockFaceController : MatrixBaseController
     {
         return Ok(await ExecuteToMatrixResponseAsync(() =>
             _clockFaceService.GetClockFaceForTime(timePayload)));
+    }
+
+    [HttpPost("override/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ClockFace>))]
+    public async Task<IActionResult> OverrideClockFace(int id)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+        {
+            MatrixUpdater.OverridenClockFace = await _clockFaceService.GetClockFace(id);
+
+            ProgramState.OverrideClockFace = true;
+            ProgramState.UpdateNextTick = true;
+
+            return MatrixUpdater.OverridenClockFace;
+        }));
+    }
+    
+    [HttpPost("override")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
+    public IActionResult CancelOverride()
+    {
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            MatrixUpdater.OverridenClockFace = null;
+            
+            ProgramState.OverrideClockFace = false;
+            ProgramState.UpdateNextTick = true;
+            
+            return true;
+        }));
     }
 
     [HttpGet]

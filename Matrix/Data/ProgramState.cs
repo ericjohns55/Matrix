@@ -10,6 +10,8 @@ public class ProgramState
     public static MatrixState PreviousState { get; set; } = MatrixState.Clock;
     public static bool UpdateNextTick { get; set; } = true;
 
+    public static bool OverrideClockFace { get; set; } = false;
+
     public static Dictionary<string, string> CurrentVariables { get; internal set; }
 
     public static MatrixTimer? Timer { get; set; }

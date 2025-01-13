@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Matrix.Data;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
@@ -45,7 +44,7 @@ public class MatrixMain
         
         using (MatrixUpdater)
         {
-            MatrixUpdater.ClockFace = await MatrixUpdater.MatrixClient.GetClockFaceForTime(TimePayload.Now());
+            MatrixUpdater.CurrentClockFace = await MatrixUpdater.MatrixClient.GetClockFaceForTime(TimePayload.Now());
             
             ProgramState.Weather = await MatrixUpdater.WeatherClient?.GetWeather()!;
             ProgramState.UpdateVariables();
@@ -58,10 +57,7 @@ public class MatrixMain
                 {
                     previousSecond = time.Second;
 
-                    // var watch = Stopwatch.StartNew();
                     MatrixUpdater.HandleUpdateLoop(time);
-                    // watch.Stop();
-                    // Console.WriteLine($"Time elapsed: {watch.ElapsedMilliseconds} ms");
                 }
         
                 Thread.Sleep(MatrixUpdater.GetUpdateInterval());
