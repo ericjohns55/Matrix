@@ -65,9 +65,19 @@ public class VariableUtility
         
         var time = DateTime.Now;
         
-        variablesDictionary.Add(VariableConstants.HourVariable, (time.Hour % 12).ToString());
-        variablesDictionary.Add(VariableConstants.MinuteVariable, time.Minute.ToString());
-        variablesDictionary.Add(VariableConstants.SecondVariable, time.Second.ToString());
+        var currentHour = time.Hour;
+        if (currentHour % 12 == 0)
+        {
+            currentHour += 12;
+        }
+        else
+        {
+            currentHour %= 12;
+        }
+        
+        variablesDictionary.Add(VariableConstants.HourVariable, currentHour.ToString());
+        variablesDictionary.Add(VariableConstants.MinuteVariable, time.Minute.ToString("D2"));
+        variablesDictionary.Add(VariableConstants.SecondVariable, time.Second.ToString("D2"));
         variablesDictionary.Add(VariableConstants.Hour24Variable, time.Hour.ToString());
         variablesDictionary.Add(VariableConstants.AmPmVariable, time.Hour < 12 ? "am" : "pm");
         variablesDictionary.Add(VariableConstants.TimeFormattedVariable, ParseTime(time, false));
