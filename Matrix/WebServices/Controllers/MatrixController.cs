@@ -3,6 +3,7 @@ using Matrix.Data;
 using Microsoft.AspNetCore.Mvc;
 using Matrix.WebServices.Services;
 using Matrix.Data.Models;
+using Matrix.Data.Models.Web;
 using Matrix.Display;
 using Matrix.Utilities;
 using Matrix.WebServices.Authentication;
@@ -68,5 +69,15 @@ public class MatrixController  : Controller
     {
         ProgramState.UpdateNextTick = !ProgramState.UpdateNextTick;
         return Ok(ProgramState.UpdateNextTick);
+    }
+    
+    [HttpPost("brightness")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(bool))]
+    public IActionResult UpdateBrightness([FromBody] BrightnessPayload payload)
+    {
+        MatrixUpdater.MatrixBrightness = payload.Brightness;
+        ProgramState.UpdateNextTick = true;
+
+        return Ok(true);
     }
 }

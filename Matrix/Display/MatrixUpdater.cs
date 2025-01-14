@@ -16,6 +16,8 @@ public class MatrixUpdater : IDisposable
 
     public static int MatrixWidth = 0;
     public static int MatrixHeight = 0;
+
+    public static int MatrixBrightness = 0;
     
     public MatrixClient MatrixClient;
     public WeatherClient? WeatherClient;
@@ -64,6 +66,7 @@ public class MatrixUpdater : IDisposable
         {
             MatrixWidth = matrixSettings.GetValue<int>(ConfigConstants.Columns);
             MatrixHeight = matrixSettings.GetValue<int>(ConfigConstants.Rows);
+            MatrixBrightness = matrixSettings.GetValue<int>(ConfigConstants.Brightness);
             
             var options = new RGBLedMatrixOptions()
             {
@@ -72,7 +75,7 @@ public class MatrixUpdater : IDisposable
                 Cols =  MatrixWidth,
                 ChainLength = matrixSettings.GetValue<int>(ConfigConstants.ChainLength),
                 Parallel = matrixSettings.GetValue<int>(ConfigConstants.Parallel),
-                Brightness = matrixSettings.GetValue<int>(ConfigConstants.Brightness),
+                Brightness = MatrixBrightness,
                 LimitRefreshRateHz = matrixSettings.GetValue<int>(ConfigConstants.LimitRefreshRateHz),
                 DisableHardwarePulsing = matrixSettings.GetValue<bool>(ConfigConstants.DisableHardwarePulsing),
                 GpioSlowdown = matrixSettings.GetValue<int>(ConfigConstants.GpioSlowdown),
@@ -121,6 +124,11 @@ public class MatrixUpdater : IDisposable
             return;
         }
 
+        if (Convert.ToInt32(_matrix.Brightness) != MatrixBrightness)
+        {
+            _matrix.Brightness = Convert.ToByte(MatrixBrightness);
+        }
+
         ProgramState.UpdateVariables();
         
         ProgramState.UpdateNextTick = false;
@@ -144,7 +152,7 @@ public class MatrixUpdater : IDisposable
             case MatrixState.Image:
                 break;
         }
-
+        
         _matrix.SwapOnVsync(_offscreenCanvas);
     }
     
