@@ -23,6 +23,14 @@ public class ClockFaceController : MatrixBaseController
         _clockFaceService = clockFaceService;
     }
 
+    [HttpGet("timer")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ClockFace>))]
+    public async Task<IActionResult> GetTimerClockFace()
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() =>
+            _clockFaceService.GetTimerClockFace()));
+    }
+    
     [HttpGet("validate")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ValidateTimePeriods()

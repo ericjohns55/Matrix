@@ -4,6 +4,7 @@ using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
+using Matrix.GpioIntegrations;
 using Matrix.Utilities;
 using Matrix.WebServices.Clients;
 using RPiRgbLEDMatrix;
@@ -22,6 +23,7 @@ public class MatrixUpdater : IDisposable
     public MatrixClient MatrixClient;
     public WeatherClient? WeatherClient;
     public ClockFace? CurrentClockFace { get; set; }
+    public ClockFace? TimerClockFace { get; set; }
     public string FontsPath { get; init; }
 
     private readonly int _updateInterval;
@@ -32,8 +34,12 @@ public class MatrixUpdater : IDisposable
     private readonly RGBLedMatrix _matrix;
     private readonly RGBLedCanvas _offscreenCanvas;
 
-    public MatrixUpdater(IConfiguration matrixSettings)
+    private Integrations? _integrations;
+
+    public MatrixUpdater(IConfiguration matrixSettings, Integrations? integrations)
     {
+        _integrations = integrations;
+        
         if (!int.TryParse(matrixSettings[ConfigConstants.UpdateInterval], out _updateInterval))
         {
             throw new ConfigurationException("Could not parse UpdateInterval");
@@ -158,6 +164,11 @@ public class MatrixUpdater : IDisposable
     
     private void UpdateTimer()
     {
+        if (TimerClockFace == null)
+        {
+            TimerClockFace = MatrixClient.GetTimerClockFace().WaitForCompletion();
+        }
+        
         var timer = ProgramState.Timer;
 
         if (timer != null)
@@ -171,8 +182,31 @@ public class MatrixUpdater : IDisposable
             {
                 ProgramState.RestorePreviousState(MatrixState.Timer);
             }
-            
-            Console.WriteLine(timer.GetFormattedTimer());
+
+            string timerStatus = timer.GetFormattedTimer();
+
+            if (timerStatus == MatrixTimer.ScreenOn)
+            {
+                if (_integrations?.BuzzWithTimer ?? false)
+                {
+                    _integrations.BuzzerSensor?.BuzzOn();
+                }
+            }
+            else if (timerStatus == MatrixTimer.ScreenOff)
+            {
+                if (_integrations?.BuzzWithTimer ?? false)
+                {
+                    _integrations.BuzzerSensor?.BuzzOff();
+                }
+            }
+
+            if (timerStatus != MatrixTimer.ScreenOff)
+            {
+                if (TimerClockFace != null)
+                {
+                    DrawClockFace(TimerClockFace);
+                }
+            }
         }
     }
 
@@ -182,17 +216,22 @@ public class MatrixUpdater : IDisposable
         
         if (clockFaceForUpdate != null)
         {
-            foreach (var textLine in clockFaceForUpdate.TextLines)
-            {
-                var parsedLine = TextLineParser.ParseTextLine(textLine, ProgramState.CurrentVariables);
+            DrawClockFace(clockFaceForUpdate);
+        }
+    }
 
-                _offscreenCanvas.DrawText(
-                    parsedLine.Font,
-                    parsedLine.XPosition,
-                    parsedLine.YPosition,
-                    parsedLine.Color,
-                    parsedLine.ParsedText);
-            }
+    private void DrawClockFace(ClockFace clockFace)
+    {
+        foreach (var textLine in clockFace.TextLines)
+        {
+            var parsedLine = TextLineParser.ParseTextLine(textLine, ProgramState.CurrentVariables);
+
+            _offscreenCanvas.DrawText(
+                parsedLine.Font,
+                parsedLine.XPosition,
+                parsedLine.YPosition,
+                parsedLine.Color,
+                parsedLine.ParsedText);
         }
     }
 

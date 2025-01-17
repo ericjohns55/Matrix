@@ -77,6 +77,8 @@ public class MatrixController  : Controller
     {
         MatrixUpdater.MatrixBrightness = payload.Brightness;
         ProgramState.UpdateNextTick = true;
+        
+        Console.WriteLine($"Source: {payload.Source}");
 
         return Ok(true);
     }

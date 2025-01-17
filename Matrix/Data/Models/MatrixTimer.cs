@@ -5,6 +5,11 @@ namespace Matrix.Data.Models;
 
 public class MatrixTimer
 {
+    public static readonly string ScreenOn = "SCREEN_ON";
+    public static readonly string ScreenOff = "SCREEN_OFF";
+
+    public static readonly string FinishedTimerText = "00:00";
+    
     public int Hour { get; init; }
     public int Minute { get; init; }
     public int Second { get; init; }
@@ -77,35 +82,26 @@ public class MatrixTimer
 
     public string GetFormattedTimer()
     {
-        var stringBuilder = new StringBuilder();
-        
         int currentTick = State == TimerState.Waiting ? TotalTicks : _currentTick;
 
         if (State == TimerState.Blinking || State == TimerState.Complete)
         {
-            if (Math.Abs(_currentTick) % 2 == 0)
-            {
-                stringBuilder.Append("SCREEN ON");
-            }
-            else
-            {
-                stringBuilder.Append("BLINK OFF");
-            }
+            return Math.Abs(_currentTick % 2) == 0 ? ScreenOn : ScreenOff;
         }
-        else
+        
+        var stringBuilder = new StringBuilder();
+        
+        int hours = currentTick / 3600;
+        int minutes = currentTick % 3600 / 60;
+        int seconds = currentTick % 60;
+        
+        if (hours > 0)
         {
-            int hours = currentTick / 3600;
-            int minutes = currentTick % 3600 / 60;
-            int seconds = currentTick % 60;
-        
-            if (hours > 0)
-            {
-                stringBuilder.Append($"{hours}:");
-            }
-        
-            stringBuilder.Append($"{minutes:D2}:");
-            stringBuilder.Append($"{seconds:D2}");
+            stringBuilder.Append($"{hours}:");
         }
+        
+        stringBuilder.Append($"{minutes:D2}:");
+        stringBuilder.Append($"{seconds:D2}");
         
         return stringBuilder.ToString();
     }

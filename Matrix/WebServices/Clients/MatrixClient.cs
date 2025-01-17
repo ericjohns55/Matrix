@@ -40,6 +40,15 @@ public class MatrixClient : WebClient
                 .OnSuccess(matrixResponse => matrixResponse.Data));
     }
 
+    public Task<ClockFace> GetTimerClockFace()
+    {
+        Uri uri = BuildUri(_serverUri.AddToPath("clockface", "timer"));
+
+        return ExecuteRequest((client) => client.GetAsync(uri),
+            httpResponseMessage => HandleJsonResponse<MatrixResponse<ClockFace>>(httpResponseMessage)
+                .OnSuccess(matrixResponse => matrixResponse.Data));
+    }
+
     public Task<bool> SendUpdate()
     {
         Uri uri = BuildUri(_serverUri.AddToPath("matrix", "update"));

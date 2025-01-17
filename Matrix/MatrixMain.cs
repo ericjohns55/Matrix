@@ -4,12 +4,13 @@ using Matrix.Data.Models;
 using Matrix.Display;
 using Matrix.Utilities;
 using Matrix.WebServices;
+using Matrix.GpioIntegrations;
 
 namespace Matrix;
 
 public class MatrixMain
 {
-    public static MatrixUpdater MatrixUpdater;
+    public static MatrixUpdater MatrixUpdater = null!;
     
     private static bool _matrixLoopRunning = true;
     
@@ -20,11 +21,13 @@ public class MatrixMain
             .AddJsonFile("matrix_settings.json")
             .Build();
         
+        Integrations integrations = Integrations.SetupIntegrations(configuration);
+        
         await ApiKeyHelper.LoadOrGenerateApiKey();
         
         try
         {
-            MatrixUpdater = new MatrixUpdater(configuration);
+            MatrixUpdater = new MatrixUpdater(configuration, integrations);
         }
         catch (ConfigurationException ex)
         {
@@ -44,10 +47,10 @@ public class MatrixMain
         
         using (MatrixUpdater)
         {
-            MatrixUpdater.CurrentClockFace = await MatrixUpdater.MatrixClient.GetClockFaceForTime(TimePayload.Now());
-            
             ProgramState.Weather = await MatrixUpdater.WeatherClient?.GetWeather()!;
             ProgramState.UpdateVariables();
+            
+            MatrixUpdater.CurrentClockFace = await MatrixUpdater.MatrixClient.GetClockFaceForTime(TimePayload.Now());
             
             int previousSecond = -1;
             while (_matrixLoopRunning)

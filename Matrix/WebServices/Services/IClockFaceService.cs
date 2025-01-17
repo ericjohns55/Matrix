@@ -14,4 +14,5 @@ public interface IClockFaceService
     public Task<int> RemoveClockFace(int faceId);
     public Task<ClockFace> RestoreClockFace(int faceId);
     public Task<ValidationResponse> ValidateClockFaceTimePeriods();
+    public Task<ClockFace> GetTimerClockFace();
 }

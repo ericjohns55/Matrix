@@ -22,7 +22,8 @@ def post_brightness(brightness: Brightness, base_url, encoded_api_key):
         url = f"{base_url}/matrix/brightness"
 
         payload = {
-            "Brightness": brightness.value
+            "Brightness": brightness.value,
+            "Source": "LightSensor"
         }
 
         headers = {

@@ -10,5 +10,5 @@ public class ClockFace
     public List<TimePeriod> TimePeriods { get; set; }
     public bool Deleted { get; set; }
 
-    public bool UpdatesEverySecond => TextLines.Any(line => line.Text.Contains(VariableConstants.SecondVariable));
+    public bool UpdatesEverySecond => TextLines?.Any(line => line.Text.Contains(VariableConstants.SecondVariable)) ?? false;
 }

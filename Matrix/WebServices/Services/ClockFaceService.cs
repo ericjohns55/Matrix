@@ -54,6 +54,21 @@ public class ClockFaceService : IClockFaceService
         return clockFace;
     }
 
+    public async Task<ClockFace> GetTimerClockFace()
+    {
+        var timerFace = await _matrixContext.ClockFace.Where(face => face.Name == WebConstants.TimerFace)
+            .Include(face => face.TextLines).ThenInclude(line => line.Color)
+            .Include(face => face.TextLines).ThenInclude(line => line.Font)
+            .FirstOrDefaultAsync();
+
+        if (timerFace == null)
+        {
+            throw new MatrixEntityNotFoundException($"Could not find timer clock face");
+        }
+
+        return timerFace;
+    }
+
     public async Task<ClockFace> GetClockFaceForTime(TimePayload timePayload)
     {
         if (timePayload == null)

@@ -57,7 +57,7 @@ public class MatrixSeeder
         if (fontsPath != null)
         {
             var regex = new Regex("/[0-9]+[xX][0-9]*[BO]{0,1}");
-
+        
             var fontsInFolder = Directory.GetFiles(fontsPath, "*.bdf", SearchOption.AllDirectories)
                 .Where(filePath => regex.IsMatch(filePath))
                 .Select(filePath => new MatrixFont()
@@ -342,8 +342,25 @@ public class MatrixSeeder
                 }
             }
         };
+
+        var timerFace = new ClockFace()
+        {
+            Name = WebConstants.TimerFace,
+            TextLines = new List<TextLine>()
+            {
+                new TextLine()
+                {
+                    Text = VariableConstants.TimerFormattedVariable,
+                    XPositioning = Positioning.XPositioning.Center,
+                    YPositioning = Positioning.YPositioning.Absolute,
+                    YLocation = 35,
+                    Color = red,
+                    Font = fontLarge
+                }
+            }
+        };
         
-        await _matrixContext.AddRangeAsync(dayFace, duskFace, nightFace);
+        await _matrixContext.AddRangeAsync(dayFace, duskFace, nightFace, timerFace);
         await _matrixContext.SaveChangesAsync();
     }
 }

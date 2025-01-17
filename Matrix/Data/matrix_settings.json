@@ -17,7 +17,14 @@
     "Parallel": 1,
     "Brightness": 50,
     "LimitRefreshRateHz": 0,
-    "DisableHardwarePulsing": true,
+    "DisableHardwarePulsing": false,
     "GpioSlowdown": 3
+  },
+  "Integrations": {
+    "AmbientLightSensorEnabled": true,
+    "BuzzerSensor": {
+      "Pin": -1,
+      "BuzzWithTimer": true
+    }
   }
 }

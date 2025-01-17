@@ -12,12 +12,14 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
+        <PackageReference Include="System.Device.Gpio" Version="3.2.0" />
     </ItemGroup>
     
 <!--    <ItemGroup>-->
 <!--        <ProjectReference Include="..\..\..\RPiRgbLEDMatrix.csproj" />-->
 <!--    </ItemGroup>-->
 
+<!--    local dev-->
     <ItemGroup>
       <Reference Include="RPiRgbLEDMatrix">
         <HintPath>..\..\RPiRgbLEDMatrix\RPiRgbLEDMatrix.dll</HintPath>
