@@ -84,11 +84,14 @@ public class MatrixTimer
     {
         int currentTick = State == TimerState.Waiting ? TotalTicks : _currentTick;
 
-        if (State == TimerState.Blinking || State == TimerState.Complete)
+        if (currentTick < 0)
         {
-            return Math.Abs(_currentTick % 2) == 0 ? ScreenOn : ScreenOff;
+            if (State == TimerState.Blinking || State == TimerState.Complete)
+            {
+                return Math.Abs(_currentTick % 2) == 1 ? ScreenOn : ScreenOff;
+            }
         }
-        
+
         var stringBuilder = new StringBuilder();
         
         int hours = currentTick / 3600;

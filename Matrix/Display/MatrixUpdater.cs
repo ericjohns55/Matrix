@@ -140,6 +140,11 @@ public class MatrixUpdater : IDisposable
         ProgramState.UpdateNextTick = false;
         
         _offscreenCanvas.Clear();
+
+        if (ProgramState.State != MatrixState.Timer)
+        {
+            _integrations?.BuzzerSensor?.EnsureOff();
+        }
         
         switch (ProgramState.State)
         {

@@ -48,15 +48,15 @@ public class VariableUtility
         {
             return "None";
         }
-        
-        var stringBuilder = new StringBuilder();
-        if (timer.Hour > 0)
+
+        var status = timer.GetFormattedTimer();
+
+        if (status == MatrixTimer.ScreenOn || status == MatrixTimer.ScreenOff)
         {
-            stringBuilder.Append($"{timer.Hour:D2}:");
+            status = MatrixTimer.FinishedTimerText;
         }
         
-        stringBuilder.Append($"{timer.Minute:D2}:{timer.Second:D2}");
-        return stringBuilder.ToString();
+        return status;
     }
     
     public static Dictionary<string, string> BuildVariableDictionary(WeatherModel? weatherData = null, MatrixTimer? timer = null)
