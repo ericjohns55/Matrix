@@ -5,33 +5,45 @@ namespace Matrix.GpioIntegrations;
 
 public class Integrations
 {
-    public BuzzerSensor? BuzzerSensor { get; init; }
+    public IBuzzerSensor? BuzzerSensor { get; init; }
 
-    public static Integrations SetupIntegrations(IConfiguration configuration)
+    public static Integrations SetupIntegrations(IConfiguration configuration, bool mockIntegration = false)
     {
-        bool ambientSensorEnabled = configuration.GetValue(ConfigConstants.AmbientSensorEnabled, false);
+        bool ambientSensorConfigured = configuration.GetValue(ConfigConstants.AmbientSensorEnabled, false);
         bool buzzWithTimer = configuration.GetValue(ConfigConstants.BuzzWithTimer, false);
         int buzzerPin = configuration.GetValue(ConfigConstants.BuzzerSensorPin, -1);
 
+        if (mockIntegration)
+        {
+            return new Integrations(new FakeBuzzer(), true, ambientSensorConfigured);
+        }
+
         GpioController controller = new GpioController();
-        BuzzerSensor? buzzerSensor = null;
+        IBuzzerSensor? buzzerSensor = null;
         
         if (buzzerPin != -1)
         {
             buzzerSensor = new BuzzerSensor(controller, buzzerPin);
         }
 
-        return new Integrations(buzzerSensor, buzzWithTimer, ambientSensorEnabled);
+        return new Integrations(buzzerSensor, buzzWithTimer, ambientSensorConfigured);
     }
 
-    private Integrations(BuzzerSensor? buzzerSensor, bool buzzWithTimer, bool ambientSensorEnabled)
+    private Integrations(IBuzzerSensor? buzzerSensor, bool buzzWithTimer, bool ambientSensorConfigured)
     {
         BuzzerSensor = buzzerSensor;
         BuzzWithTimer = buzzWithTimer;
-        AmbientSensorEnabled = ambientSensorEnabled;
+        AmbientSensorConfigured = ambientSensorConfigured;
+
+        if (AmbientSensorConfigured)
+        {
+            AmbientSensorEnabled = true;
+        }
     }
 
-    public bool AmbientSensorEnabled { get; init; }
+    public bool AmbientSensorEnabled { get; set; }
+
+    public bool AmbientSensorConfigured { get; init; }
 
     public bool BuzzWithTimer { get; init; }
 }

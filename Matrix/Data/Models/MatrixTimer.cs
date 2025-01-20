@@ -10,17 +10,25 @@ public class MatrixTimer
 
     public static readonly string FinishedTimerText = "00:00";
     
-    public int Hour { get; init; }
-    public int Minute { get; init; }
-    public int Second { get; init; }
-    
+    public int Hour { get; internal set; }
+    public int Minute { get; internal set; }
+    public int Second { get; internal set; }
+
+    public bool IsStopwatch { get; init; }
+
     public TimerState State { get; private set; }
     
     public MatrixTimer(Timer timer)
     {
-        Hour = timer.Hour;
-        Minute = timer.Minute;
-        Second = timer.Second;
+        IsStopwatch = timer.IsStopwatch;
+        
+        if (!IsStopwatch)
+        {
+            Hour = timer.Hour;
+            Minute = timer.Minute;
+            Second = timer.Second;
+        }
+        
         State = TimerState.Waiting;
     }
     
@@ -52,11 +60,32 @@ public class MatrixTimer
 
     public void Tick(int blinkCount)
     {
-        _currentTick--;
+        if (IsStopwatch)
+        {
+            _currentTick++;
+
+            Second++;
+
+            if (Second > 60)
+            {
+                Second %= 60;
+                Minute++;
+            }
+
+            if (Minute > 60)
+            {
+                Minute %= 60;
+                Hour++;
+            }
+        }
+        else
+        {
+            _currentTick--;
+        }
         
         if (State == TimerState.Running)
         {
-            if (_currentTick == 0)
+            if (_currentTick == 0 && !IsStopwatch)
             {
                 State = TimerState.Blinking;
             }

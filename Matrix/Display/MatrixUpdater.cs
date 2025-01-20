@@ -4,7 +4,6 @@ using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
-using Matrix.GpioIntegrations;
 using Matrix.Utilities;
 using Matrix.WebServices.Clients;
 using RPiRgbLEDMatrix;
@@ -34,12 +33,8 @@ public class MatrixUpdater : IDisposable
     private readonly RGBLedMatrix _matrix;
     private readonly RGBLedCanvas _offscreenCanvas;
 
-    private Integrations? _integrations;
-
-    public MatrixUpdater(IConfiguration matrixSettings, Integrations? integrations)
+    public MatrixUpdater(IConfiguration matrixSettings)
     {
-        _integrations = integrations;
-        
         if (!int.TryParse(matrixSettings[ConfigConstants.UpdateInterval], out _updateInterval))
         {
             throw new ConfigurationException("Could not parse UpdateInterval");
@@ -96,6 +91,11 @@ public class MatrixUpdater : IDisposable
         }
     }
 
+    public void UpdateTimerFace(ClockFace timerFace)
+    {
+        TimerClockFace = timerFace;
+    }
+
     public int GetUpdateInterval() => _updateInterval;
 
     public string GetServerUrl() => _serverUrl;
@@ -143,7 +143,7 @@ public class MatrixUpdater : IDisposable
 
         if (ProgramState.State != MatrixState.Timer)
         {
-            _integrations?.BuzzerSensor?.EnsureOff();
+            MatrixMain.Integrations.BuzzerSensor?.EnsureOff();
         }
         
         switch (ProgramState.State)
@@ -169,11 +169,6 @@ public class MatrixUpdater : IDisposable
     
     private void UpdateTimer()
     {
-        if (TimerClockFace == null)
-        {
-            TimerClockFace = MatrixClient.GetTimerClockFace().WaitForCompletion();
-        }
-        
         var timer = ProgramState.Timer;
 
         if (timer != null)
@@ -192,16 +187,16 @@ public class MatrixUpdater : IDisposable
 
             if (timerStatus == MatrixTimer.ScreenOn)
             {
-                if (_integrations?.BuzzWithTimer ?? false)
+                if (MatrixMain.Integrations.BuzzWithTimer)
                 {
-                    _integrations.BuzzerSensor?.BuzzOn();
+                    MatrixMain.Integrations.BuzzerSensor?.Buzz(true);
                 }
             }
             else if (timerStatus == MatrixTimer.ScreenOff)
             {
-                if (_integrations?.BuzzWithTimer ?? false)
+                if (MatrixMain.Integrations.BuzzWithTimer)
                 {
-                    _integrations.BuzzerSensor?.BuzzOff();
+                    MatrixMain.Integrations.BuzzerSensor?.Buzz(false);
                 }
             }
 
@@ -230,6 +225,7 @@ public class MatrixUpdater : IDisposable
         foreach (var textLine in clockFace.TextLines)
         {
             var parsedLine = TextLineParser.ParseTextLine(textLine, ProgramState.CurrentVariables);
+            // Console.WriteLine(parsedLine.ParsedText);
 
             _offscreenCanvas.DrawText(
                 parsedLine.Font,

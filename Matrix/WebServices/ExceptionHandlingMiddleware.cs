@@ -53,6 +53,8 @@ public class ExceptionHandlingMiddleware
             case ClockFaceException:
             case WebException:
                 return HttpStatusCode.BadRequest;
+            case BrightnessException:
+                return HttpStatusCode.MethodNotAllowed;
             default:
                 return HttpStatusCode.InternalServerError;
         }

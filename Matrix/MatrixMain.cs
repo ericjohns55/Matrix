@@ -11,6 +11,7 @@ namespace Matrix;
 public class MatrixMain
 {
     public static MatrixUpdater MatrixUpdater = null!;
+    public static Integrations Integrations = null!;
     
     private static bool _matrixLoopRunning = true;
     
@@ -20,14 +21,14 @@ public class MatrixMain
             .SetBasePath(Path.Combine(Environment.CurrentDirectory, "Data"))
             .AddJsonFile("matrix_settings.json")
             .Build();
-        
-        Integrations integrations = Integrations.SetupIntegrations(configuration);
+
+        Integrations = Integrations.SetupIntegrations(configuration);
         
         await ApiKeyHelper.LoadOrGenerateApiKey();
         
         try
         {
-            MatrixUpdater = new MatrixUpdater(configuration, integrations);
+            MatrixUpdater = new MatrixUpdater(configuration);
         }
         catch (ConfigurationException ex)
         {

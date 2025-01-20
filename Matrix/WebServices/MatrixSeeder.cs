@@ -17,6 +17,29 @@ public class MatrixSeeder
         _logger = new LoggerFactory().CreateLogger<MatrixSeeder>();
     }
 
+    public async Task SeedFonts(string? fontsPath)
+    {
+        if (!string.IsNullOrWhiteSpace(fontsPath))
+        {
+            _matrixContext.MatrixFont.RemoveRange(_matrixContext.MatrixFont);
+            await _matrixContext.SaveChangesAsync();
+        
+            var regex = new Regex("/[0-9]+[xX][0-9]*[BO]{0,1}");
+        
+            var fontsInFolder = Directory.GetFiles(fontsPath, "*.bdf", SearchOption.AllDirectories)
+                .Where(filePath => regex.IsMatch(filePath))
+                .Select(filePath => new MatrixFont()
+                {
+                    Name = filePath.Substring(fontsPath.Length + 1).Replace(".bdf", string.Empty),
+                    FileLocation = filePath
+                })
+                .ToList();
+            
+            await _matrixContext.AddRangeAsync(fontsInFolder);
+            await _matrixContext.SaveChangesAsync();
+        }
+    }
+
     public async Task Seed(bool drop, string? fontsPath = null)
     {
         _logger.LogInformation("Seeding matrix ...");
@@ -53,23 +76,7 @@ public class MatrixSeeder
         await _matrixContext.SaveChangesAsync();
         
         _logger.LogInformation("Seeding fonts...");
-        
-        if (fontsPath != null)
-        {
-            var regex = new Regex("/[0-9]+[xX][0-9]*[BO]{0,1}");
-        
-            var fontsInFolder = Directory.GetFiles(fontsPath, "*.bdf", SearchOption.AllDirectories)
-                .Where(filePath => regex.IsMatch(filePath))
-                .Select(filePath => new MatrixFont()
-                {
-                    Name = filePath.Substring(fontsPath.Length + 1).Replace(".bdf", string.Empty),
-                    FileLocation = filePath
-                })
-                .ToList();
-            
-            await _matrixContext.AddRangeAsync(fontsInFolder);
-            await _matrixContext.SaveChangesAsync();
-        }
+        await SeedFonts(fontsPath);
         
         var fontSmall = _matrixContext.MatrixFont.Single(font => font.Name == "5x8");
         var fontMedium = _matrixContext.MatrixFont.Single(font => font.Name == "6x9");
@@ -78,7 +85,8 @@ public class MatrixSeeder
         _logger.LogInformation("Seeding clock faces ...");
         var dayFace = new ClockFace()
         {
-            Name = "day",
+            Name = "Day",
+            IsTimerFace = false,
             TimePeriods = new List<TimePeriod>()
             {
                 new TimePeriod()
@@ -179,7 +187,8 @@ public class MatrixSeeder
         
         var duskFace = new ClockFace()
         {
-            Name = "dusk",
+            Name = "Dusk",
+            IsTimerFace = false,
             TimePeriods = new List<TimePeriod>()
             {
                 new TimePeriod()
@@ -292,7 +301,8 @@ public class MatrixSeeder
         
         var nightFace = new ClockFace()
         {
-            Name = "night",
+            Name = "Night",
+            IsTimerFace = false,
             TimePeriods = new List<TimePeriod>()
             {
                 new TimePeriod()
@@ -345,7 +355,8 @@ public class MatrixSeeder
 
         var timerFace = new ClockFace()
         {
-            Name = WebConstants.TimerFace,
+            Name = "Timer Default",
+            IsTimerFace = true,
             TextLines = new List<TextLine>()
             {
                 new TextLine()

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Matrix.Data.Utilities;
 using Matrix.WebServices.Authentication;
@@ -57,10 +56,17 @@ public static class MatrixServer
             var context = scope.ServiceProvider.GetRequiredService<MatrixContext>();
             await context.Database.EnsureCreatedAsync();
 
+            MatrixSeeder? seeder = null;
             if (configuration.GetValue<bool>(ConfigConstants.RunSeedOnStart))
             {
-                MatrixSeeder seeder = new MatrixSeeder(context);
+                seeder = new MatrixSeeder(context);
                 await seeder.Seed(configuration.GetValue<bool>(ConfigConstants.SeedDrop), fontsPath);
+            }
+
+            if (seeder == null && args.Contains("--rebuild-fonts")) // SeedFonts is called within the seeder already if it was already ran
+            {
+                seeder = new MatrixSeeder(context);
+                await seeder.SeedFonts(fontsPath);
             }
         }
 

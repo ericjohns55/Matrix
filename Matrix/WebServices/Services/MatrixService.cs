@@ -27,6 +27,7 @@ public class MatrixService : IMatrixService
             {
                 ProgramState.Weather = await weatherClient.GetWeather();
                 ProgramState.UpdateVariables();
+                ProgramState.UpdateNextTick = true;
             }
         }
 

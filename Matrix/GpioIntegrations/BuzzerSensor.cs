@@ -2,11 +2,11 @@ using System.Device.Gpio;
 
 namespace Matrix.GpioIntegrations;
 
-public class BuzzerSensor
+public class BuzzerSensor : IBuzzerSensor
 {
     private readonly GpioController _controller;
+
     private int _buzzerPin;
-    private bool _isOn;
     
     public BuzzerSensor(GpioController controller, int pin)
     {
@@ -15,26 +15,23 @@ public class BuzzerSensor
         
         _controller.OpenPin(_buzzerPin, PinMode.Output);
     }
+    
+    public int PinNumber() => _buzzerPin;
 
     private void ToggleBuzz(PinValue value) => _controller.Write(_buzzerPin, value);
 
-    public void BuzzOn()
+    public void Buzz(bool onOff)
     {
-        ToggleBuzz(PinValue.High);
-        _isOn = true;
+        ToggleBuzz(onOff ? PinValue.High : PinValue.Low);
     }
 
-    public void BuzzOff()
-    {
-        ToggleBuzz(PinValue.Low);
-        _isOn = false;
-    }
-
+    public bool Status() => _controller.Read(_buzzerPin) == PinValue.High;
+    
     public void EnsureOff()
     {
-        if (_isOn)
+        if (_controller.Read(_buzzerPin) == PinValue.High)
         {
-            BuzzOff();
+            Buzz(false);
         }
     }
 }

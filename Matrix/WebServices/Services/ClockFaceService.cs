@@ -18,11 +18,12 @@ public class ClockFaceService : IClockFaceService
         _matrixContext = matrixContext;
     }
     
-    public Task<List<ClockFace>> GetAllClockFaces(SearchFilter filter = SearchFilter.Active)
+    public Task<List<ClockFace>> GetAllClockFaces(SearchFilter filter = SearchFilter.Active, bool timerFace = false)
     {
         if (filter == SearchFilter.AllResults)
         {
             return _matrixContext.ClockFace
+                .Where(face => face.IsTimerFace == timerFace)
                 .Include(face => face.TimePeriods)
                 .Include(face => face.TextLines).ThenInclude(line => line.Color)
                 .Include(face => face.TextLines).ThenInclude(line => line.Font)
@@ -31,7 +32,7 @@ public class ClockFaceService : IClockFaceService
         
         var searchForDeleted = filter == SearchFilter.Deleted;
 
-        return _matrixContext.ClockFace.Where(face => face.Deleted == searchForDeleted)
+        return _matrixContext.ClockFace.Where(face => face.Deleted == searchForDeleted && face.IsTimerFace == timerFace)
             .Include(face => face.TimePeriods)
             .Include(face => face.TextLines).ThenInclude(line => line.Color)
             .Include(face => face.TextLines).ThenInclude(line => line.Font)
@@ -51,12 +52,17 @@ public class ClockFaceService : IClockFaceService
             throw new MatrixEntityNotFoundException($"Could not find clock face with id {faceId}");
         }
 
+        if (clockFace.IsTimerFace)
+        {
+            throw new ClockFaceException(WebConstants.ClockFaceIsTimer);
+        }
+
         return clockFace;
     }
 
-    public async Task<ClockFace> GetTimerClockFace()
+    public async Task<ClockFace> GetTimerClockFace(int id)
     {
-        var timerFace = await _matrixContext.ClockFace.Where(face => face.Name == WebConstants.TimerFace)
+        var timerFace = await _matrixContext.ClockFace.Where(face => face.Id == id)
             .Include(face => face.TextLines).ThenInclude(line => line.Color)
             .Include(face => face.TextLines).ThenInclude(line => line.Font)
             .FirstOrDefaultAsync();
@@ -64,6 +70,11 @@ public class ClockFaceService : IClockFaceService
         if (timerFace == null)
         {
             throw new MatrixEntityNotFoundException($"Could not find timer clock face");
+        }
+
+        if (!timerFace.IsTimerFace)
+        {
+            throw new ClockFaceException(WebConstants.InvalidTimerFace);
         }
 
         return timerFace;

@@ -5,6 +5,7 @@ using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
 using Matrix.WebServices.Authentication;
+using Matrix.WebServices.Services;
 using Microsoft.AspNetCore.Mvc;
 using Timer = Matrix.Data.Models.Timer;
 
@@ -15,21 +16,30 @@ namespace Matrix.WebServices.Controllers;
 public class TimerController : MatrixBaseController
 {
     private readonly ILogger<TimerController> _logger;
+    private readonly IClockFaceService _clockFaceService;
 
-    public TimerController(ILogger<TimerController> logger)
+    public TimerController(ILogger<TimerController> logger, IClockFaceService clockFaceService)
     {
         _logger = logger;
+        _clockFaceService = clockFaceService;
     }
 
     [HttpPost]
     [Route("create")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
-    public IActionResult CreateTimer([FromBody] Timer timer, bool alsoStart = false)
+    public async Task<IActionResult> CreateTimer([FromBody] Timer timer, bool alsoStart = false)
     {
-        return Ok(ExecuteToMatrixResponse(() =>
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
         {
-            ProgramState.PreviousState = ProgramState.State;
-            ProgramState.State = MatrixState.Timer;
+            var timerFace = await _clockFaceService.GetTimerClockFace(timer.TimerFaceId);
+            MatrixMain.MatrixUpdater.UpdateTimerFace(timerFace);
+
+            if (ProgramState.State != MatrixState.Timer)
+            {
+                ProgramState.PreviousState = ProgramState.State;
+                ProgramState.State = MatrixState.Timer;
+            }
+            
             ProgramState.Timer = new MatrixTimer(timer);
             ProgramState.UpdateNextTick = true;
 

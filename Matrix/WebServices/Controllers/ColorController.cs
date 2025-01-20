@@ -1,4 +1,5 @@
 using Matrix.Data.Models;
+using Matrix.Data.Models.Web;
 using Matrix.WebServices.Authentication;
 using Matrix.WebServices.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ namespace Matrix.WebServices.Controllers;
 
 [Route("colors")]
 [ApiKeyAuthFilter]
-public class ColorController : Controller
+public class ColorController : MatrixBaseController
 {
     private readonly ILogger<ColorController> _logger;
     private readonly IColorService _colorService;
@@ -19,41 +20,49 @@ public class ColorController : Controller
     }
 
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<MatrixColor>))]
-    public IActionResult GetColors()
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<List<MatrixColor>>))]
+    public async Task<IActionResult> GetColors()
     {
-        return Ok(_colorService.GetMatrixColors());
+        return Ok(await ExecuteToMatrixResponseAsync(() => _colorService.GetMatrixColors()));
     }
     
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixColor))]
-    public IActionResult GetColor(int id)
+    public async Task<IActionResult> GetColor(int id)
     {
-        return Ok(_colorService.GetMatrixColor(id));
+        return Ok(await ExecuteToMatrixResponseAsync(() => _colorService.GetMatrixColor(id)));
     }
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MatrixColor))]
-    public IActionResult Post([FromBody] MatrixColor color)
+    public async Task<IActionResult> Post([FromBody] MatrixColor color)
     {
-        _logger.LogInformation($"Creating new matrix color: {color.Name}");
-        _colorService.AddMatrixColor(color);
-        return Ok(color);
+        return Ok(await ExecuteToMatrixResponseAsync(() =>
+        {
+            _logger.LogInformation($"Creating new matrix color: {color.Name}");
+            return _colorService.AddMatrixColor(color);
+        }));
     }
 
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(int))]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        _logger.LogInformation($"Deleted matrix color with ID {id}");
-        return Ok(_colorService.RemoveMatrixColor(id));
+        return Ok(await ExecuteToMatrixResponseAsync(() =>
+        {
+            _logger.LogInformation($"Deleted matrix color with ID {id}");
+            return _colorService.RemoveMatrixColor(id);
+        }));
     }
 
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixColor))]
-    public IActionResult Put(int id, [FromBody] MatrixColor color)
+    public async Task<IActionResult> Put(int id, [FromBody] MatrixColor color)
     {
-        _logger.LogInformation($"Updating matrix color with ID {id}");
-        return Ok(_colorService.UpdateMatrixColor(id, color));
+        return Ok(await ExecuteToMatrixResponseAsync(() =>
+        {
+            _logger.LogInformation($"Updating matrix color with ID {id}");
+            return _colorService.UpdateMatrixColor(id, color);
+        }));
     }
 }

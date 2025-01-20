@@ -20,7 +20,18 @@ public class ProgramState
 
     public static void RestorePreviousState(MatrixState currentState)
     {
-        State = PreviousState;
+        if (PreviousState != currentState)
+        {
+            State = PreviousState;
+        }
+        else
+        {
+            Console.WriteLine("--- REPAIRING BROKEN STATE BY RESETTING TO CLOCK ---");
+            
+            MatrixMain.Integrations.BuzzerSensor?.EnsureOff();
+            State = MatrixState.Clock;
+        }
+        
         PreviousState = currentState;
         UpdateNextTick = true;
     }

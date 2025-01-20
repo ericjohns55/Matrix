@@ -1,4 +1,5 @@
 using Matrix.Data;
+using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
@@ -23,12 +24,12 @@ public class ClockFaceController : MatrixBaseController
         _clockFaceService = clockFaceService;
     }
 
-    [HttpGet("timer")]
+    [HttpGet("timer/{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ClockFace>))]
-    public async Task<IActionResult> GetTimerClockFace()
+    public async Task<IActionResult> GetTimerClockFace(int id)
     {
         return Ok(await ExecuteToMatrixResponseAsync(() =>
-            _clockFaceService.GetTimerClockFace()));
+            _clockFaceService.GetTimerClockFace(id)));
     }
     
     [HttpGet("validate")]
