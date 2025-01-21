@@ -3,6 +3,7 @@ using Matrix.Data.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Matrix.WebServices.Services;
 using Matrix.Data.Models.Web;
+using Matrix.Data.Types;
 using Matrix.Data.Utilities;
 using Matrix.Display;
 using Matrix.Utilities;
@@ -56,8 +57,11 @@ public class MatrixController  : MatrixBaseController
         return Ok(ExecuteToMatrixResponse(() => new ProgramOverview()
         {
             MatrixState = ProgramState.State,
+            UpdateInterval = MatrixMain.MatrixUpdater.GetUpdateInterval(),
             CurrentVariables = ProgramState.CurrentVariables,
             Timer = ProgramState.Timer,
+            PlainText = ProgramState.PlainText,
+            ScrollingText = ProgramState.ScrollingText,
             CurrentClockFaceForNow = MatrixMain.MatrixUpdater.CurrentClockFace,
             OverridenClockFace = ProgramState.OverrideClockFace ? MatrixUpdater.OverridenClockFace : null
         }));
@@ -69,6 +73,27 @@ public class MatrixController  : MatrixBaseController
     {
         return Ok(ExecuteToMatrixResponse(() =>
         {
+            ProgramState.UpdateNextTick = true;
+            return ProgramState.UpdateNextTick;
+        }));
+    }
+
+    [HttpPost("restore")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
+    public IActionResult RestoreState()
+    {
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            ProgramState.PreviousState = ProgramState.State;
+            ProgramState.State = MatrixState.Clock;
+
+            ProgramState.ScrollingText = null;
+            ProgramState.PlainText = null;
+            ProgramState.Timer = null;
+
+            ProgramState.OverrideClockFace = false;
+            MatrixUpdater.OverridenClockFace = null;
+            
             ProgramState.UpdateNextTick = true;
             return ProgramState.UpdateNextTick;
         }));

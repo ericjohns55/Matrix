@@ -1,6 +1,7 @@
 using Matrix.Data;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
+using Matrix.Data.Types;
 using Matrix.Display;
 using Matrix.Utilities;
 using Matrix.WebServices;
@@ -56,11 +57,18 @@ public class MatrixMain
             int previousSecond = -1;
             while (_matrixLoopRunning)
             {
+                // scrolling text allows variable updates
+                bool shouldHandleUpdateLoop = ProgramState.State == MatrixState.ScrollingText;
+                
                 var time = DateTime.Now;
                 if (previousSecond != time.Second)
                 {
                     previousSecond = time.Second;
+                    shouldHandleUpdateLoop = true;
+                }
 
+                if (shouldHandleUpdateLoop)
+                {
                     MatrixUpdater.HandleUpdateLoop(time);
                 }
         

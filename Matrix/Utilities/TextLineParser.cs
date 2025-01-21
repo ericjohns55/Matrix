@@ -9,15 +9,7 @@ public class TextLineParser
 {
     public static ParsedTextLine ParseTextLine(TextLine textLine, Dictionary<string, string> currentVariables)
     {
-        string parsedText = textLine.Text;
-
-        foreach (var variable in currentVariables.Keys)
-        {
-            if (parsedText.Contains(variable))
-            {
-                parsedText = parsedText.Replace(variable, currentVariables[variable]);
-            }
-        }
+        string parsedText = SubstituteVariables(textLine.Text, currentVariables);
         
         parsedText = parsedText.Substring(0,
             Math.Min(parsedText.Length, GetMaxSubstringLength(textLine, MatrixUpdater.MatrixWidth)));
@@ -36,6 +28,21 @@ public class TextLineParser
             Font = font,
             Color = color
         };
+    }
+    
+    public static string SubstituteVariables(string text, Dictionary<string, string> variables)
+    {
+        string parsedText = text;
+
+        foreach (var variable in variables.Keys)
+        {
+            if (parsedText.Contains(variable))
+            {
+                parsedText = parsedText.Replace(variable, variables[variable]);
+            }
+        }
+
+        return parsedText;
     }
 
     private static int ParseXPosition(TextLine textLine, string parsedText, int matrixWidth)

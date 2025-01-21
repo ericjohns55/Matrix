@@ -16,6 +16,10 @@ public class ProgramState
 
     public static MatrixTimer? Timer { get; set; }
 
+    public static PlainText? PlainText { get; set; }
+    
+    public static ScrollingText? ScrollingText { get; set; }
+
     public static WeatherModel? Weather { get; set; }
 
     public static void RestorePreviousState(MatrixState currentState)
@@ -57,6 +61,11 @@ public class ProgramState
         }
 
         if (State == MatrixState.ScrollingText)
+        {
+            return true;
+        }
+
+        if (State == MatrixState.Text && PlainText != null & (PlainText!.ShouldUpdateSecondly || now.Second == 0))
         {
             return true;
         }

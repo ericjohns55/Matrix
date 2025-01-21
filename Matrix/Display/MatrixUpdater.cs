@@ -33,6 +33,8 @@ public class MatrixUpdater : IDisposable
     private readonly RGBLedMatrix _matrix;
     private readonly RGBLedCanvas _offscreenCanvas;
 
+    private DateTime _lastServerUpdateTime;
+
     public MatrixUpdater(IConfiguration matrixSettings)
     {
         if (!int.TryParse(matrixSettings[ConfigConstants.UpdateInterval], out _updateInterval))
@@ -89,6 +91,8 @@ public class MatrixUpdater : IDisposable
         {
             throw new ConfigurationException("Could not create Matrix using configured options\n" + ex.Message);
         }
+        
+        _lastServerUpdateTime = DateTime.Now;
     }
 
     public void UpdateTimerFace(ClockFace timerFace)
@@ -96,7 +100,15 @@ public class MatrixUpdater : IDisposable
         TimerClockFace = timerFace;
     }
 
-    public int GetUpdateInterval() => _updateInterval;
+    public int GetUpdateInterval()
+    {
+        if (ProgramState.State == MatrixState.ScrollingText && ProgramState.ScrollingText != null)
+        {
+            return ProgramState.ScrollingText.ScrollingDelay;
+        }
+        
+        return _updateInterval;
+    }
 
     public string GetServerUrl() => _serverUrl;
 
@@ -104,24 +116,33 @@ public class MatrixUpdater : IDisposable
     {
         if (ProgramState.State == MatrixState.Clock || ProgramState.State == MatrixState.Timer)
         {
-            // update weather every 5 minutes; 10 seconds before next minutely update
-            if ((now.Minute + 1) % 5 == 0 && now.Second == 50)
-            {
-                Console.WriteLine("Updating weather");
-                ProgramState.Weather = WeatherClient?.GetWeather().WaitForCompletion() ?? WeatherModel.Empty;
-            }
+            var lastUpdate = now - _lastServerUpdateTime;
 
-            // update clock face 10 seconds before each minute ends
-            if (now.Second == 50)
+            // ensure that with scrolling text we do not spam requests
+            if (lastUpdate.TotalSeconds > 5)
             {
-                var nextMinute = DateTime.Now.AddMinutes(1);
-                
-                CurrentClockFace = MatrixClient.GetClockFaceForTime(new TimePayload()
+                // update weather every 5 minutes; 10 seconds before next minutely update
+                if ((now.Minute + 1) % 5 == 0 && now.Second == 50)
                 {
-                    Hour = nextMinute.Hour,
-                    Minute = nextMinute.Minute,
-                    DayOfWeek = now.DayOfWeek
-                }).WaitForCompletion();
+                    Console.WriteLine("Updating weather");
+                    ProgramState.Weather = WeatherClient?.GetWeather().WaitForCompletion() ?? WeatherModel.Empty;
+                }
+
+                // update clock face 10 seconds before each minute ends
+                if (now.Second == 50)
+                {
+                    var nextMinute = DateTime.Now.AddMinutes(1);
+                
+                    CurrentClockFace = MatrixClient.GetClockFaceForTime(new TimePayload()
+                    {
+                        Hour = nextMinute.Hour,
+                        Minute = nextMinute.Minute,
+                        DayOfWeek = now.DayOfWeek
+                    }).WaitForCompletion();
+
+                    // weather updates happen simultaneously with clock face updates
+                    _lastServerUpdateTime = now;
+                }
             }
         }
         
@@ -157,14 +178,26 @@ public class MatrixUpdater : IDisposable
             case MatrixState.Canvas:
                 break;
             case MatrixState.Text:
+                UpdateText();
                 break;
             case MatrixState.ScrollingText:
+                UpdateScrollingText();
                 break;
             case MatrixState.Image:
                 break;
         }
         
         _matrix.SwapOnVsync(_offscreenCanvas);
+    }
+    
+    private void UpdateClock()
+    {
+        var clockFaceForUpdate = ProgramState.OverrideClockFace ? OverridenClockFace : CurrentClockFace;
+        
+        if (clockFaceForUpdate != null)
+        {
+            DrawClockFace(clockFaceForUpdate);
+        }
     }
     
     private void UpdateTimer()
@@ -209,14 +242,28 @@ public class MatrixUpdater : IDisposable
             }
         }
     }
-
-    private void UpdateClock()
+    
+    private void UpdateText()
     {
-        var clockFaceForUpdate = ProgramState.OverrideClockFace ? OverridenClockFace : CurrentClockFace;
-        
-        if (clockFaceForUpdate != null)
+        if (ProgramState.PlainText != null)
         {
-            DrawClockFace(clockFaceForUpdate);
+            var parsedLines = ProgramState.PlainText.ParseIntoTextLines();
+            parsedLines.ForEach(parsedLine => DrawParsedTextLine(parsedLine));
+        }
+    }
+
+    private void UpdateScrollingText()
+    {
+        if (ProgramState.ScrollingText != null)
+        {
+            if (ProgramState.ScrollingText.HandleUpdate())
+            {
+                DrawParsedTextLine(ProgramState.ScrollingText.GetParsedTextLine());
+            }
+            else
+            {
+                ProgramState.RestorePreviousState(MatrixState.Timer);
+            }
         }
     }
 
@@ -227,13 +274,18 @@ public class MatrixUpdater : IDisposable
             var parsedLine = TextLineParser.ParseTextLine(textLine, ProgramState.CurrentVariables);
             // Console.WriteLine(parsedLine.ParsedText);
 
-            _offscreenCanvas.DrawText(
-                parsedLine.Font,
-                parsedLine.XPosition,
-                parsedLine.YPosition,
-                parsedLine.Color,
-                parsedLine.ParsedText);
+            DrawParsedTextLine(parsedLine);
         }
+    }
+
+    private void DrawParsedTextLine(ParsedTextLine parsedLine)
+    {
+        _offscreenCanvas.DrawText(
+            parsedLine.Font,
+            parsedLine.XPosition,
+            parsedLine.YPosition,
+            parsedLine.Color,
+            parsedLine.ParsedText);
     }
 
     public void Dispose()
