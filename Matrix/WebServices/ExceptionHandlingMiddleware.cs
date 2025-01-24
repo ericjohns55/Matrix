@@ -4,6 +4,7 @@ using Matrix.Data.Exceptions;
 using Matrix.Data.Models.Web;
 using Matrix.Utilities;
 using Newtonsoft.Json;
+using SixLabors.ImageSharp;
 using WebException = Matrix.Data.Exceptions.WebException;
 
 namespace Matrix.WebServices;
@@ -51,8 +52,11 @@ public class ExceptionHandlingMiddleware
                 return HttpStatusCode.NotFound;
             case ArgumentException: 
             case ClockFaceException:
+            case InvalidImageException:
+            case ImageFormatException:
             case WebException:
                 return HttpStatusCode.BadRequest;
+            case IntegrationsException:
             case BrightnessException:
                 return HttpStatusCode.MethodNotAllowed;
             default:

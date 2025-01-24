@@ -35,6 +35,8 @@ def post_brightness(brightness: Brightness, base_url, encoded_api_key):
 
         if response.status_code == 200:
             print(f"Successfully posted [Brightness: {brightness.value}]")
+        elif response.status_code == 405:
+            print("LightSensor is currently disabled")
         else:
             print("Post fail")
     except Exception:

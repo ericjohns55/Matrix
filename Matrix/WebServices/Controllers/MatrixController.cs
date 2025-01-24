@@ -90,6 +90,7 @@ public class MatrixController  : MatrixBaseController
             ProgramState.ScrollingText = null;
             ProgramState.PlainText = null;
             ProgramState.Timer = null;
+            ProgramState.Image = null;
 
             ProgramState.OverrideClockFace = false;
             MatrixUpdater.OverridenClockFace = null;
@@ -101,10 +102,15 @@ public class MatrixController  : MatrixBaseController
     
     [HttpPost("brightness")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
-    public IActionResult UpdateBrightness([FromBody] BrightnessPayload payload)
+    public IActionResult UpdateBrightness([FromBody] BrightnessPayload payload, bool disableAmbientSensor = false)
     {
         return Ok(ExecuteToMatrixResponse(() =>
         {
+            if (disableAmbientSensor && MatrixMain.Integrations.AmbientSensorEnabled)
+            {
+                MatrixMain.Integrations.AmbientSensorEnabled = false;
+            }
+            
             if (payload.Source == WebConstants.LightSensorSource && !MatrixMain.Integrations.AmbientSensorEnabled)
             {
                 throw new BrightnessException(WebConstants.AmbientSensorDisabled);

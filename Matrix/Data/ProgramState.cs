@@ -1,6 +1,8 @@
 using Matrix.Data.Models;
 using Matrix.Data.Types;
 using Matrix.Data.Models.Web;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Matrix.Data;
 
@@ -19,6 +21,8 @@ public class ProgramState
     public static PlainText? PlainText { get; set; }
     
     public static ScrollingText? ScrollingText { get; set; }
+    
+    public static Image<Rgb24>? Image { get; set; }
 
     public static WeatherModel? Weather { get; set; }
 

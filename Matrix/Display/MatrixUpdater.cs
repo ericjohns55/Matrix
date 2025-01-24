@@ -175,8 +175,6 @@ public class MatrixUpdater : IDisposable
             case MatrixState.Timer:
                 UpdateTimer();
                 break;
-            case MatrixState.Canvas:
-                break;
             case MatrixState.Text:
                 UpdateText();
                 break;
@@ -184,6 +182,7 @@ public class MatrixUpdater : IDisposable
                 UpdateScrollingText();
                 break;
             case MatrixState.Image:
+                DrawImage();
                 break;
         }
         
@@ -263,6 +262,22 @@ public class MatrixUpdater : IDisposable
             else
             {
                 ProgramState.RestorePreviousState(MatrixState.Timer);
+            }
+        }
+    }
+
+    private void DrawImage()
+    {
+        if (ProgramState.Image != null)
+        {
+            for (int i = 0; i < MatrixHeight; i++)
+            {
+                for (int j = 0; j < MatrixWidth; j++)
+                {
+                    var pixel = ProgramState.Image[i, j];
+                    _offscreenCanvas.SetPixel(i, j, 
+                        new Color(pixel.R, pixel.G, pixel.B));
+                }
             }
         }
     }
