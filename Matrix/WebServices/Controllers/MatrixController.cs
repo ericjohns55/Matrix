@@ -57,6 +57,7 @@ public class MatrixController  : MatrixBaseController
         return Ok(ExecuteToMatrixResponse(() => new ProgramOverview()
         {
             MatrixState = ProgramState.State,
+            Brightness = MatrixUpdater.MatrixBrightness,
             UpdateInterval = MatrixMain.MatrixUpdater.GetUpdateInterval(),
             CurrentVariables = ProgramState.CurrentVariables,
             Timer = ProgramState.Timer,
