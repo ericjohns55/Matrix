@@ -63,7 +63,7 @@ public class MatrixController  : MatrixBaseController
             Timer = ProgramState.Timer,
             PlainText = ProgramState.PlainText,
             ScrollingText = ProgramState.ScrollingText,
-            CurrentClockFaceForNow = MatrixMain.MatrixUpdater.CurrentClockFace,
+            CurrentClockFace = MatrixMain.MatrixUpdater.CurrentClockFace,
             OverridenClockFace = ProgramState.OverrideClockFace ? MatrixUpdater.OverridenClockFace : null
         }));
     }

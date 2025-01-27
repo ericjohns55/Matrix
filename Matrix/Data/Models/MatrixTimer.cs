@@ -1,5 +1,8 @@
 using System.Text;
+using Matrix.Data.Exceptions;
+using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
+using Matrix.Data.Utilities;
 
 namespace Matrix.Data.Models;
 
@@ -10,11 +13,11 @@ public class MatrixTimer
 
     public static readonly string FinishedTimerText = "00:00";
     
-    public int Hour { get; internal set; }
-    public int Minute { get; internal set; }
-    public int Second { get; internal set; }
+    public int Hour { get; private set; }
+    public int Minute { get; private set; }
+    public int Second { get; private set; }
 
-    public bool IsStopwatch { get; init; }
+    private bool IsStopwatch { get; }
 
     public TimerState State { get; private set; }
     
@@ -107,6 +110,50 @@ public class MatrixTimer
     public bool NeedsScreenUpdate()
     {
         return State == TimerState.Running || State == TimerState.Blinking;
+    }
+
+    public void Reset()
+    {
+        if (!IsStopwatch)
+        {
+            throw new TimerException(WebConstants.TimerNotStopwatch);
+        }
+
+        Hour = 0;
+        Minute = 0;
+        Second = 0;
+        
+        _currentTick = 0;
+    }
+
+    public void Modify(TimerModification payload)
+    {
+        int newTickCount;
+        
+        if (payload.ModificationType == ModificationType.Subtract)
+        {
+            if (TotalTicks - payload.TickCount < 0)
+            {
+                throw new TimerException(WebConstants.InvalidModification);
+            }
+            
+            newTickCount = TotalTicks - payload.TickCount;
+        }
+        else
+        {
+            newTickCount = TotalTicks +  payload.TickCount;
+        }
+        
+        _currentTick = newTickCount;
+
+        // normalize
+        Hour = newTickCount / 3600;
+        newTickCount %= 3600;
+        
+        Minute = newTickCount / 60;
+        newTickCount %= 60;
+        
+        Second = newTickCount;
     }
 
     public string GetFormattedTimer()

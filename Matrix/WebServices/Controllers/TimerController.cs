@@ -23,12 +23,10 @@ public class TimerController : MatrixBaseController
         _logger = logger;
         _clockFaceService = clockFaceService;
     }
-    
-    // TODO: add or subtract time endpoints?
 
     [HttpPost]
     [Route("create")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixTimer>))]
     public async Task<IActionResult> CreateTimer([FromBody] Timer timer, bool alsoStart = false)
     {
         return Ok(await ExecuteToMatrixResponseAsync(async () =>
@@ -50,13 +48,13 @@ public class TimerController : MatrixBaseController
                 ProgramState.Timer.Start();
             }
 
-            return true;
+            return ProgramState.Timer;
         }));
     }
 
     [HttpPost]
     [Route("start")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixTimer>))]
     public IActionResult StartTimer()
     {
         return Ok(ExecuteToMatrixResponse(() =>
@@ -65,13 +63,13 @@ public class TimerController : MatrixBaseController
 
             ProgramState.Timer?.Start();
 
-            return true;
+            return ProgramState.Timer;
         }));
     }
 
     [HttpPost]
     [Route("stop")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixTimer>))]
     public IActionResult StopTimer()
     {
         return Ok(ExecuteToMatrixResponse(() =>
@@ -79,14 +77,14 @@ public class TimerController : MatrixBaseController
             CheckIfNullTimer();
 
             ProgramState.Timer?.Cancel();
-            
-            return true;
+
+            return ProgramState.Timer;
         }));
     }
 
     [HttpPost]
     [Route("pause")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixTimer>))]
     public IActionResult PauseTimer()
     {
         return Ok(ExecuteToMatrixResponse(() =>
@@ -94,14 +92,14 @@ public class TimerController : MatrixBaseController
             CheckIfNullTimer();
 
             ProgramState.Timer?.Pause();
-            
-            return true;
+
+            return ProgramState.Timer;
         }));
     }
 
     [HttpPost]
     [Route("resume")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixTimer>))]
     public IActionResult ResumeTimer()
     {
         return Ok(ExecuteToMatrixResponse(() =>
@@ -110,23 +108,53 @@ public class TimerController : MatrixBaseController
 
             ProgramState.Timer?.Start(false);
 
-            return true;
+            return ProgramState.Timer;
         }));
     }
 
     [HttpGet]
     [Route("state")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixState>))]
     public IActionResult GetTimerState()
     {
         return Ok(ExecuteToMatrixResponse(() =>
         {
             CheckIfNullTimer();
 
-            return ProgramState.Timer?.State.ToString() ?? "Unknown";
+            return ProgramState.Timer?.State;
         }));
     }
 
+    [HttpPost]
+    [Route("modify")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixTimer>))]
+    public IActionResult ModifyTimer([FromBody] TimerModification payload)
+    {
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            CheckIfNullTimer();
+            
+            ProgramState.Timer?.Modify(payload);
+
+            return ProgramState.Timer;
+        }));
+    }
+
+    [HttpPost]
+    [Route("reset")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixTimer>))]
+    public IActionResult ResetStopwatch()
+    {
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            CheckIfNullTimer();
+
+            ProgramState.Timer?.Reset();
+
+            return ProgramState.Timer;
+        }));
+    }
+    
     private void CheckIfNullTimer()
     {
         if (ProgramState.Timer == null)
@@ -134,5 +162,26 @@ public class TimerController : MatrixBaseController
             _logger.LogInformation("Timer is null");
             throw new TimerException(WebConstants.TimerNull);
         }
+    }
+
+    private List<string> ValidateModification(MatrixTimer currentTimer, TimerModification payload)
+    {
+        var invalidFields = new List<string>();
+        if (currentTimer.Hour - payload.HourAmount <= 0)
+        {
+            invalidFields.Add("Hour");
+        }
+
+        if (currentTimer.Minute - payload.MinuteAmount <= 0)
+        {
+            invalidFields.Add("Minute");
+        }
+
+        if (currentTimer.Second - payload.SecondAmount <= 0)
+        {
+            invalidFields.Add("Second");
+        }
+
+        return invalidFields;
     }
 }

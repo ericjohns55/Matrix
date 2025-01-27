@@ -44,12 +44,12 @@ public static class MatrixServer
 
         var app = builder.Build();
         
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
+        app.UseSwagger();
+        app.UseSwaggerUI(config =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
+            config.SwaggerEndpoint("/swagger/v1/swagger.json", "Matrix API");
+            config.RoutePrefix = string.Empty;
+        });
 
         using (var scope = app.Services.CreateScope())
         {
