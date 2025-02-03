@@ -50,7 +50,7 @@ public class ColorService : IColorService
         originalColor.Green = updatedColor.Green;
         originalColor.Blue = updatedColor.Blue;
         
-        _matrixContext.MatrixColor.Update(updatedColor);
+        _matrixContext.MatrixColor.Update(originalColor);
         await _matrixContext.SaveChangesAsync();
         
         return await GetMatrixColor(colorId);

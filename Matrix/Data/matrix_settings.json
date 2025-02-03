@@ -2,13 +2,13 @@
   "ServerUrl": "http://localhost:5000",
   "DatabasePath": null,
   "Seed": {
-    "RunOnStartup": true,
-    "Drop": true
+    "RunOnStartup": false,
+    "Drop": false
   },
   "UpdateInterval": 250,
-  "TimerBlinkCount": 3,
-  "WeatherUrl": "",
-  "FontsFolder": "/home/pi/rpi-rgb-led-matrix/fonts",
+  "TimerBlinkCount": 2,
+  "WeatherUrl": "https://api.openweathermap.org/data/3.0/onecall?lat=40.1843&lon=-75.538&exclude=hourly,minutely&appid=10b116aa2f0bb75e430d607598923449&units=imperial",
+  "FontsFolder": "/Users/ericjohns/Git/rpi-rgb-led-matrix/fonts",
   "MatrixOptions": {
     "HardwareMapping": "adafruit-hat-pwm",
     "Rows": 64,

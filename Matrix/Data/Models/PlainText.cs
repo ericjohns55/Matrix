@@ -63,6 +63,8 @@ public class PlainText
                 ParsedText = line.Builder.ToString(),
                 XPosition = xPosition(line.Builder.Length),
                 YPosition = yPosition(line.LineNumber),
+                FontLocation = Font.FileLocation,
+                FontHeight = Font.Height,
                 Font = font,
                 Color = color
             });

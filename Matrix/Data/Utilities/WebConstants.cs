@@ -15,6 +15,8 @@ public class WebConstants
     public static readonly string AmbientSensorDisabled = "The ambient sensor is disabled";
     public static readonly string ColorNotFound = "Could not load provided color";
     public static readonly string FontNotFound = "Could not load provided font";
-    public static readonly string InvalidImage = "Provided file is not a valid image";
+    public static readonly string MissingImage = "Image could not be found";
     public static readonly string InvalidImageSize = "Provided image was not matrix size";
+    public static readonly string TextNotFound = "Could not find text object";
+    public static readonly string MissingFontInformation = "Could not find font information";
 }

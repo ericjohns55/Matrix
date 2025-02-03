@@ -82,7 +82,9 @@ public class ScrollingText
             YPosition = YPosition,
             ParsedText = ParsedText,
             Color = ParsedColor,
-            Font = ParsedFont
+            Font = ParsedFont,
+            FontLocation = Font.FileLocation,
+            FontHeight = Font.Height
         };
     }
 }

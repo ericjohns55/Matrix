@@ -1,12 +1,9 @@
-using BdfFontParser;
 using Matrix.Data;
 using Matrix.Data.Exceptions;
-using Matrix.Data.Models;
 using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
 using Matrix.Display;
-using Matrix.Utilities;
 using Matrix.WebServices.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
@@ -26,32 +23,54 @@ public class ImageController : MatrixBaseController
         _logger = logger;
     }
 
-    [Produces("image/png")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
+    public IActionResult GetImageBase64(bool trimHeader = false)
+    {
+        return Ok(ExecuteToMatrixResponse(() =>
+            MatrixRenderer.ImageToBase64(ProgramState.Image, trimHeader)));
+    }
+    
     [HttpGet("render")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
-    public async Task<IActionResult> RenderCurrent()
+    public IActionResult RenderCurrent(bool trimHeader = false)
     {
-        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+        return Ok(ExecuteToMatrixResponse(() =>
         {
-            var clockFace = ProgramState.OverrideClockFace ?
-                MatrixUpdater.OverridenClockFace : 
-                MatrixMain.MatrixUpdater.CurrentClockFace;
+            Image<Rgb24>? image;
 
-            if (clockFace == null)
+            switch (ProgramState.State)
             {
-                throw new ClockFaceException(WebConstants.ClockFaceNull);
+                case MatrixState.Clock:
+                    var clockFace = ProgramState.OverrideClockFace ?
+                        MatrixUpdater.OverridenClockFace : 
+                        MatrixMain.MatrixUpdater.CurrentClockFace;
+                    
+                    image = MatrixRenderer.RenderClockFace(clockFace);
+                    
+                    break;
+                case MatrixState.Timer:
+                    image = MatrixRenderer.RenderClockFace(MatrixMain.MatrixUpdater.TimerClockFace);
+                    
+                    break;
+                case MatrixState.Text:
+                    image = MatrixRenderer.RenderPlainText(ProgramState.PlainText);
+                    
+                    break;
+                case MatrixState.ScrollingText:
+                    image = MatrixRenderer.RenderScrollingText(ProgramState.ScrollingText);
+
+                    break;
+                case MatrixState.Image:
+                    image = ProgramState.Image;
+                    
+                    break;
+                default:
+                    image = new Image<Rgb24>(MatrixUpdater.MatrixWidth, MatrixUpdater.MatrixHeight);
+                    break;
             }
-
-            var image = new Image<Rgb24>(MatrixUpdater.MatrixWidth, MatrixUpdater.MatrixHeight);
-
-            foreach (var textLine in clockFace.TextLines)
-            {
-                DrawTextLine(image, textLine);
-            }
-
-            await image.SaveAsPngAsync(Response.Body);
             
-            return string.Empty;
+            return MatrixRenderer.ImageToBase64(image, trimHeader);
         }));
     }
 
@@ -83,30 +102,34 @@ public class ImageController : MatrixBaseController
         }));
     }
 
-    private void DrawTextLine(Image<Rgb24> image, TextLine textLine)
+    [HttpPost("base64")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixState>))]
+    public IActionResult PostImageBase64([FromBody] Base64Payload imagePayload)
     {
-        var parsedLine = TextLineParser.ParseTextLine(textLine, ProgramState.CurrentVariables);
-        
-        BdfFont font = new BdfFont(textLine.Font.FileLocation);
-        var mapping = font.GetMapOfString(parsedLine.ParsedText);
-        
-        var imageXOffset = parsedLine.XPosition;
-        var imageYOffset = parsedLine.YPosition - textLine.Font.Height + 1;
-        
-        var textColor = new Rgb24(
-            Convert.ToByte(textLine.Color.Red), 
-            Convert.ToByte(textLine.Color.Green),
-            Convert.ToByte(textLine.Color.Blue));
-        
-        for (int i = 0; i < mapping.GetLength(1); i++)
+        return Ok(ExecuteToMatrixResponse(() =>
         {
-            for (int j = 0; j < mapping.GetLength(0); j++)
+            if (string.IsNullOrWhiteSpace(imagePayload.Base64Image))
             {
-                if (mapping[j, i])
-                {
-                    image[j + imageXOffset, i + imageYOffset] = textColor;
-                }
+                throw new InvalidImageException(WebConstants.MissingImage);
             }
-        }
+
+            var imageBytes = Convert.FromBase64String(imagePayload.Base64Image);
+            var image = Image.Load<Rgb24>(imageBytes);
+
+            if (image.Height != MatrixUpdater.MatrixHeight || image.Width != MatrixUpdater.MatrixWidth)
+            {
+                throw new InvalidImageException(WebConstants.InvalidImageSize);
+            }
+
+            ProgramState.Image = image;
+
+            ProgramState.PreviousState = ProgramState.State;
+            ProgramState.State = MatrixState.Image;
+            ProgramState.UpdateNextTick = true;
+
+            return ProgramState.State;
+        }));
     }
+    
+
 }

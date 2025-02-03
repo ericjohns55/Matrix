@@ -23,6 +23,8 @@ public class TextLineParser
         return new ParsedTextLine()
         {
             ParsedText = parsedText,
+            FontLocation = textLine.Font.FileLocation,
+            FontHeight = textLine.Font.Height,
             XPosition = xPos,
             YPosition = yPos,
             Font = font,

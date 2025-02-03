@@ -4,6 +4,7 @@ using Matrix.Data.Models;
 using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
+using Matrix.Display;
 using Matrix.WebServices.Authentication;
 using Matrix.WebServices.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -38,12 +39,12 @@ public class TextController : MatrixBaseController
         {
             if (plainTextPayload.Color == null)
             {
-                plainTextPayload.Color = await LoadMatrixColorFromId(plainTextPayload.MatrixColorId);
+                plainTextPayload.Color = await LoadMatrixColorFromId(_matrixContext, plainTextPayload.MatrixColorId);
             }
 
             if (plainTextPayload.Font == null)
             {
-                plainTextPayload.Font = await LoadMatrixFontFromId(plainTextPayload.MatrixFontId);
+                plainTextPayload.Font = await LoadMatrixFontFromId(_matrixContext, plainTextPayload.MatrixFontId);
             }
             
             ProgramState.PlainText = new PlainText(plainTextPayload);
@@ -56,6 +57,28 @@ public class TextController : MatrixBaseController
         }));
     }
 
+    [HttpPost("plain/render")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
+    public async Task<IActionResult> RenderPlainText([FromBody] PlainTextPayload plainTextPayload, bool trimHeader = false)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+        {
+            if (plainTextPayload.Color == null)
+            {
+                plainTextPayload.Color = await LoadMatrixColorFromId(_matrixContext, plainTextPayload.MatrixColorId);
+            }
+
+            if (plainTextPayload.Font == null)
+            {
+                plainTextPayload.Font = await LoadMatrixFontFromId(_matrixContext, plainTextPayload.MatrixFontId);
+            }
+            
+            var plainText = new PlainText(plainTextPayload);
+            
+            return MatrixRenderer.ImageToBase64(MatrixRenderer.RenderPlainText(plainText), trimHeader);
+        }));
+    }
+    
     [HttpPost("scrolling")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ScrollingText>))]
     public async Task<IActionResult> CreateScrollingText([FromBody] ScrollingTextPayload scrollingTextPayload)
@@ -64,12 +87,12 @@ public class TextController : MatrixBaseController
         {
             if (scrollingTextPayload.Color == null)
             {
-                scrollingTextPayload.Color = await LoadMatrixColorFromId(scrollingTextPayload.MatrixColorId);
+                scrollingTextPayload.Color = await LoadMatrixColorFromId(_matrixContext, scrollingTextPayload.MatrixColorId);
             }
 
             if (scrollingTextPayload.Font == null)
             {
-                scrollingTextPayload.Font = await LoadMatrixFontFromId(scrollingTextPayload.MatrixFontId);
+                scrollingTextPayload.Font = await LoadMatrixFontFromId(_matrixContext, scrollingTextPayload.MatrixFontId);
             }
             
             ProgramState.ScrollingText = new ScrollingText(scrollingTextPayload);
@@ -79,6 +102,28 @@ public class TextController : MatrixBaseController
             ProgramState.UpdateNextTick = true;
 
             return ProgramState.ScrollingText;
+        }));
+    }
+    
+    [HttpPost("scrolling/render")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
+    public async Task<IActionResult> RenderPlainText([FromBody] ScrollingTextPayload scrollingTextPayload, bool trimHeader = false)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(async() =>
+        {
+            if (scrollingTextPayload.Color == null)
+            {
+                scrollingTextPayload.Color = await LoadMatrixColorFromId(_matrixContext, scrollingTextPayload.MatrixColorId);
+            }
+
+            if (scrollingTextPayload.Font == null)
+            {
+                scrollingTextPayload.Font = await LoadMatrixFontFromId(_matrixContext, scrollingTextPayload.MatrixFontId);
+            }
+            
+            var scrollingText = new ScrollingText(scrollingTextPayload);
+            
+            return MatrixRenderer.ImageToBase64(MatrixRenderer.RenderScrollingText(scrollingText), trimHeader);
         }));
     }
 
@@ -106,29 +151,5 @@ public class TextController : MatrixBaseController
             
             return ProgramState.State;
         }));
-    }
-
-    private async Task<MatrixColor> LoadMatrixColorFromId(int id)
-    {
-        var color = await _matrixContext.MatrixColor.FirstOrDefaultAsync(color => color.Id == id);
-
-        if (color == null)
-        {
-            throw new MatrixEntityNotFoundException(WebConstants.ColorNotFound);
-        }
-
-        return color;
-    }
-
-    private async Task<MatrixFont> LoadMatrixFontFromId(int id)
-    {
-        var font = await _matrixContext.MatrixFont.FirstOrDefaultAsync(font => font.Id == id);
-
-        if (font == null)
-        {
-            throw new MatrixEntityNotFoundException(WebConstants.FontNotFound);
-        }
-        
-        return font;
     }
 }

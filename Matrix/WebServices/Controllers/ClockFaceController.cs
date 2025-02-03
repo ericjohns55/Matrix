@@ -141,4 +141,12 @@ public class ClockFaceController : MatrixBaseController
             return await _clockFaceService.RemoveClockFace(id);
         }));
     }
+
+    [HttpPost("render")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
+    public IActionResult RenderClockFace([FromBody] ClockFace clockFace, bool trimHeader = false)
+    {
+        return Ok(ExecuteToMatrixResponse(() =>
+            MatrixRenderer.ImageToBase64(MatrixRenderer.RenderClockFace(clockFace), trimHeader)));
+    }
 }
