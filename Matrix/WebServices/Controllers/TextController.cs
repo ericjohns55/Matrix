@@ -27,8 +27,8 @@ public class TextController : MatrixBaseController
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixListResponse<MatrixFont>))]
     public async Task<IActionResult> GetFonts()
     {
-        return Ok(await ExecuteToMatrixResponseAsync(async () => 
-            await _matrixContext.MatrixFont.OrderBy(font => font.Name).ToListAsync()));
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+            (await _matrixContext.MatrixFont.ToListAsync()).OrderBy(font => font.Width).ThenBy(font => font.Height)));
     }
     
     [HttpPost("plain")]
