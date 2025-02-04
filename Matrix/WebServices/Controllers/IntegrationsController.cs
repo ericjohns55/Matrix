@@ -1,7 +1,5 @@
-using Matrix.Data;
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models.Web;
-using Matrix.Data.Utilities;
 using Matrix.WebServices.Authentication;
 using Microsoft.AspNetCore.Mvc;
 
