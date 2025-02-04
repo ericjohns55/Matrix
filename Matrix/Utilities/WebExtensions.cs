@@ -34,6 +34,28 @@ public static class WebExtensions
             }
         }
     }
+    
+    private static void CheckTaskSuccess<TResult>(
+        Task task,
+        Func<Exception, TResult>? errorFunction,
+        Action? cancelFunction)
+    {
+        if (task.IsFaulted)
+        {
+            if (errorFunction != null)
+            {
+                errorFunction.Invoke(task.Exception);
+            }
+        }
+
+        if (task.IsCanceled)
+        {
+            if (cancelFunction != null)
+            {
+                cancelFunction.Invoke();
+            }
+        }
+    }
 
     private static bool CheckTaskFailure(Task t)
     {
@@ -43,7 +65,7 @@ public static class WebExtensions
     public static Task<TNewResult> OnSuccess<TResult, TNewResult>(
         this Task<TResult> task,
         Func<TResult, TNewResult> onSuccessFunction,
-        Action<Exception>? onErrorFunction = null,
+        Func<Exception, TNewResult>? onErrorFunction = null,
         Action? cancelFunction = null)
     {
         return task.ContinueWith(t =>

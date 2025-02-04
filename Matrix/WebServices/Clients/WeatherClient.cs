@@ -18,7 +18,7 @@ public class WeatherClient : WebClient
     {
         return ExecuteRequest((client) => client.GetAsync(_weatherUri),
             httpResponseMessage => HandleResponseAsString(httpResponseMessage)
-                .OnSuccess(weatherJson =>
+                .OnSuccess<string, WeatherModel>(weatherJson =>
                 {
                     var weatherObject = JObject.Parse(weatherJson);
                     
@@ -34,7 +34,7 @@ public class WeatherClient : WebClient
                         WindSpeed = FromFloatOrEmpty(weatherObject["current"]?["wind_speed"], 1),
                         Humidity = FromFloatOrEmpty(weatherObject["current"]?["humidity"])
                     };
-                }));
+                }, (_) => WeatherModel.Empty));
     }
 
     private string FromStringOrEmpty(JToken? token, bool remapTStorms = false)
