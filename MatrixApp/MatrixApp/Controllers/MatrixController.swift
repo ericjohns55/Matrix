@@ -20,7 +20,7 @@ struct ProgramOverview: Decodable {
 }
 
 @MainActor
-class ProgramOverviewViewModel: ObservableObject {
+class MatrixController: ObservableObject {
     @Published var programOverview: ProgramOverview = ProgramOverview(matrixState: "Unknown", brightness: -1, updateInterval: -1, currentVariables: nil, timer: nil, plainText: nil, scrollingText: nil, currentClockFace: nil, overridenClockFace: nil)
     
     func getProgramOverview() async {
@@ -32,5 +32,15 @@ class ProgramOverviewViewModel: ObservableObject {
         }
         
         self.programOverview = matrixResponse.data
+    }
+    
+    func restoreMatrix() async -> Bool {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+            
+        guard let response: MatrixResponse<Bool> = try? await client.PostRequest(route: "matrix/restore", body: nil) else {
+            return false
+        }
+        
+        return response.data
     }
 }

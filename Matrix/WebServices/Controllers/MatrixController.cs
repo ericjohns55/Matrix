@@ -29,6 +29,12 @@ public class MatrixController  : MatrixBaseController
         _configuration = configuration;
     }
 
+    [HttpGet("ping")]
+    public IActionResult Ping()
+    {
+        return Ok();
+    }
+
     [HttpGet("variables")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, string>))]
     public IActionResult GetVariables()

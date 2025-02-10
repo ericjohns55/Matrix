@@ -31,6 +31,7 @@ class MatrixClient {
             var request = HTTPClientRequest(url: "\(_serverUrl)\(route)")
             request.method = .GET
             request.headers.add(contentsOf: ["Authorization": "Basic \(_encodedApiKey)"])
+            request.headers.add(contentsOf: ["Content-Type": "application/json"])
             
             let httpResponse = try await httpClient.execute(request, timeout: .seconds(3))
             let responseBody = try await httpResponse.body.collect(upTo: 1024 * 1024)
@@ -45,29 +46,53 @@ class MatrixClient {
         return response
     }
     
-    func RenderMatrixImage() async throws -> UIImage? {
+    func PostRequest<T: Decodable>(route: String, body: Codable?) async throws -> T? {
         let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
-        var uiImage: UIImage?
+        var response: T?
         
         do {
-            var request = HTTPClientRequest(url: "\(_serverUrl)image/render")
-            request.method = .GET
+            var request = HTTPClientRequest(url: "\(_serverUrl)\(route)")
+            request.method = .POST
             request.headers.add(contentsOf: ["Authorization": "Basic \(_encodedApiKey)"])
+            request.headers.add(contentsOf: ["Content-Type": "application/json"])
+            
+            if (body != nil) {
+                let jsonData = try JSONEncoder().encode(body!)
+                request.body = .bytes(jsonData)
+            }
             
             let httpResponse = try await httpClient.execute(request, timeout: .seconds(3))
             let responseBody = try await httpResponse.body.collect(upTo: 1024 * 1024)
             
-            let data = Data(buffer: responseBody)
-            
-            if let image = UIImage(data: data) {
-                uiImage = image
-            }
+            response = try JSONDecoder().decode(T.self, from: responseBody)
         } catch {
-            print(error)
+            print("POST FAILED: \(error)")
         }
         
         try await httpClient.shutdown()
         
-        return uiImage
+        return response
+    }
+    
+    func GetAsImage(route: String, body: Codable?) async throws -> UIImage? {
+        if (body == nil) {
+            guard let base64String: MatrixResponse<String> = try? await GetRequest(route: route) else {
+                return nil
+            }
+            
+            if let base64 = Data(base64Encoded: base64String.data), let uiImage = UIImage(data: base64) {
+                return uiImage
+            }
+        } else {
+            guard let base64String: MatrixResponse<String> = try? await PostRequest(route: route, body: body!) else {
+                return nil
+            }
+            
+            if let base64 = Data(base64Encoded: base64String.data), let uiImage = UIImage(data: base64) {
+                return uiImage
+            }
+        }
+        
+        return nil
     }
 }

@@ -11,34 +11,66 @@
 import SwiftUI
 
 enum AppPage {
-    case image, text, home, clockFaces, timers
+    case image, text, overview, clockFaces, timers
 }
 
-struct ContentView: View {
-    @StateObject var programOverview = ProgramOverviewViewModel()
-    @StateObject var fonts = FontsViewModel()
-    @StateObject var colors = ColorsViewModel()
-    @StateObject var renderedImages = RenderedImageViewModel()
+struct ContentView: View {    
+    @StateObject var matrixController = MatrixController()
+    @StateObject var textController = TextController()
+    @StateObject var imagesController = ImagesController()
     
+    @State private var selectedTab: AppPage = .text
+    
+    @State private var currentTextImage: UIImage? = nil
+    @State private var textControllerText: String = ""
+    @State private var selectedTextAlignment: String = "Center"
+    @State private var selectedColor: MatrixColor? = nil
+    @State private var selectedFont: MatrixFont? = nil
+    @State private var textSplitByWord: Bool = true
+    
+    @State private var showAlert = false
+    
+    func formatText() -> String {
+        var text = "Text: [TEXT]\nAlignment: [ALIGNMENT]\nColor: [COLOR]\nFont: [FONT]"
+        text = text.replacingOccurrences(of: "[TEXT]", with: textControllerText)
+        text = text.replacingOccurrences(of: "[ALIGNMENT]", with: selectedTextAlignment)
+                
+        if let selectedColor = selectedColor {
+            text = text.replacingOccurrences(of: "[COLOR]", with: "\(selectedColor.name) [\(selectedColor.id)]")
+        } else {
+            text = text.replacingOccurrences(of: "[COLOR]", with: "(NOT SELECTED)")
+        }
+        
+        if let selectedFont = selectedFont {
+            text = text.replacingOccurrences(of: "[FONT]", with: "\(selectedFont.name) [\(selectedFont.id)]")
+        } else {
+            text = text.replacingOccurrences(of: "[FONT]", with: "(NOT SELECTED)")
+        }
+        
+        return text
+    }
+    
+        
     var body: some View {
         Text("Matrix Controller")
             .fontWeight(.bold)
             .font(.system(size: 32.0))
+            .task {
+                await textController.loadAllData()
+                await imagesController.fetchMatrixRendering()
+            }
         
-        TabView {
-            Tab("Image", systemImage: "photo") {
+        TabView(selection: $selectedTab) {
+            VStack {
                 VStack {
                     List {
-                        ForEach(colors.colors) { color in
+                        ForEach(textController.colors) { color in
                             HStack {
                                 Text(color.name)
                                 Spacer()
                                 Text("\(color.id)")
                             }
                         }
-                    }
-                    .task {
-                        await colors.getColors()
                     }
                     .listStyle(PlainListStyle())
                     .navigationTitle("Colors")
@@ -48,25 +80,188 @@ struct ContentView: View {
                 
                 Button(action: {
                     Task {
-                        await colors.getColors()
-                        await renderedImages.fetchDecodeImage()
+                        await textController.loadAllData()
+                        await imagesController.fetchMatrixRendering()
                     }
                 }, label: {
                     Text("Refresh Colors")
                 })
             }
+            .tabItem {
+                Label("Image", systemImage: "photo")
+            }.tag(AppPage.image)
             
-            Tab("Text", systemImage: "textformat") {
+            
+            
+            VStack {
+                Image(uiImage: (currentTextImage ?? imagesController.awaitingContent))
+                    .resizable()
+                    .scaledToFit()
+                    .padding(20)
+                    .frame(width: 256, height: 256)
+                    .border(.gray)
+                
+                
+                LabeledContent {
+                    TextField("(example text)", text: $textControllerText)
+                        .multilineTextAlignment(.trailing)
+                        .onSubmit {
+                            Task {
+                                await optionallyUpdateTextPreview()
+                            }
+                        }
+                } label: {
+                    Text("Text Content")
+                }.padding(10)
+                                
+                LabeledContent {
+                    Picker("Text Orientation", selection: $selectedTextAlignment) {
+                        Text("Left").tag("Left")
+                        Text("Center").tag("Center")
+                        Text("Right").tag("Right")
+                    }
+                    .onChange(of: selectedTextAlignment) {
+                        Task {
+                            await optionallyUpdateTextPreview()
+                        }
+                    }
+                } label: {
+                    Text("Text Orientation")
+                }.padding(10)
+                
+                LabeledContent {
+                    Picker("Color", selection: $selectedColor) {
+                        ForEach(textController.colors) { color in
+                            HStack {
+                                Text(color.name)
+                            }
+                            .tag(color as MatrixColor?)
+                        }
+                    } currentValueLabel: {
+                        Text(selectedColor?.name ?? "Select a Color")
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .onChange(of: selectedColor) {
+                        Task {
+                            await optionallyUpdateTextPreview()
+                        }
+                    }
+                } label: {
+                    Text("Color")
+                }.padding(10)
+                
+                LabeledContent {
+                    Picker("Font", selection: $selectedFont) {
+                        ForEach(textController.fonts) { font in
+                            HStack {
+                                Text(font.name)
+                            }
+                            .tag(font as MatrixFont?)
+                        }
+                    } currentValueLabel: {
+                        Text(selectedFont?.name ?? "Select a Font")
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .onChange(of: selectedFont) {
+                        Task {
+                            await optionallyUpdateTextPreview()
+                        }
+                    }
+                } label: {
+                    Text("Font")
+                }.padding(10)
+                
+                LabeledContent {
+                    Toggle(isOn: $textSplitByWord) {
+                        EmptyView()
+                    }
+                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    .onChange(of: textSplitByWord) {
+                        Task {
+                            await optionallyUpdateTextPreview()
+                        }
+                    }
+                } label: {
+                    Text("Split by Word")
+                }.padding(10)
+                
+                Button(action: {
+                    Task {
+                        await textController.tryPostText(text: textControllerText, color: selectedColor, font: selectedFont, alignment: selectedTextAlignment, splitByWord: textSplitByWord)
+                    }
+                }) {
+                    Text("Send to Matrix")
+                }
+                .padding(10)
+                .frame(width: 256, height: 48)
+                .border(.gray)
+                
+//                HStack {
+//                    Button("Show Preview") {
+//                        showAlert = true
+//                    }
+//                    .alert(textController.validatePlainText(text: textControllerText, color: selectedColor, font: selectedFont, alignment: selectedTextAlignment).invalidFields, isPresented: $showAlert) {
+//                        Button("OK", role: .cancel) {}
+//                    }
+//                    .padding(20)
+//                    .frame(minWidth: 0, maxWidth: .infinity)
+//                    .border(.gray)
+//                }
+            }
+            .tabItem {
+                Label("Text", systemImage: "textformat")
+            }.tag(AppPage.text)
+    
+            
+            
+            VStack {
+                VStack(spacing: 0) {
+                    Button(action: {
+                        Task {
+                            await imagesController.fetchMatrixRendering()
+                            await matrixController.getProgramOverview()
+                        }
+                    }) {
+                        Image(uiImage: imagesController.matrixRendering)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 256, height: 256)
+                    }.border(.gray)
+                    
+                    Text("Current State: \(matrixController.programOverview.matrixState)")
+                        .task {
+                            await imagesController.fetchMatrixRendering()
+                            await matrixController.getProgramOverview()
+                        }
+                }.padding(10)
+                
+                Button(action: {
+                    Task {
+                        _ = await matrixController.restoreMatrix()
+                        await imagesController.fetchMatrixRendering()
+                        await matrixController.getProgramOverview()
+                    }
+                }) {
+                    Text("Restore Matrix")
+                }
+                .padding(20)
+                .frame(minWidth: 0, maxWidth: .infinity)
+                .border(.gray)
+            }
+            .tabItem {
+                Label("Overview", systemImage: "house.fill")
+            }.tag(AppPage.overview)
+            
+            
+            
+            VStack {
                 VStack {
                     List {
-                        ForEach(fonts.fonts) { font in
+                        ForEach(textController.fonts) { font in
                             HStack {
                                 Text(font.name)
                             }
                         }
-                    }
-                    .task {
-                        await fonts.getFonts()
                     }
                     .listStyle(PlainListStyle())
                     .navigationTitle("Fonts")
@@ -76,43 +271,38 @@ struct ContentView: View {
                 
                 Button(action: {
                     Task {
-                        await fonts.getFonts()
+                        await textController.getFonts()
                     }
                 }, label: {
                     Text("Refresh Fonts")
                 })
             }
+            .tabItem {
+                Label("Clock Faces", systemImage: "clock")
+            }.tag(AppPage.clockFaces)
             
-            Tab("Overview", systemImage: "house.fill") {
-                VStack(spacing: 0) {
-                    Button(action: {
-                        Task {
-                            await renderedImages.fetchDecodeImage()
-                            await programOverview.getProgramOverview()
-                        }
-                    }) {
-                        Image(uiImage: renderedImages.image)
-                            .resizable()
-                            .scaledToFit()
-                            .task {
-                                await renderedImages.fetchDecodeImage()
-                            }
-                    }
-                    
-                    Text("Current State: \(programOverview.programOverview.matrixState)")
-                        .task {
-                            await programOverview.getProgramOverview()
-                        }
-                }
-            }
             
-            Tab("Clock Faces", systemImage: "clock") {
-                
-            }
             
-            Tab("Timers", systemImage: "timer") {
-                
+            VStack {
+//                List(colors.colors, id: \.id, selection: $selectedColor) { color in
+//                    Text(color.name)
+//                }.task {
+//                    await colors.getColors()
+//                }
             }
+            .tabItem {
+                Label("Timers", systemImage: "timer")
+            }.tag(AppPage.timers)
+        }
+    }
+    
+    private func optionallyUpdateTextPreview() async {
+        let renderedImage = await textController.tryRenderPreview(text: textControllerText, color: selectedColor, font: selectedFont, alignment: selectedTextAlignment, splitByWord: textSplitByWord)
+        
+        if (renderedImage != nil) {
+            currentTextImage = renderedImage
+        } else {
+            currentTextImage = imagesController.invalidContent
         }
     }
 }
