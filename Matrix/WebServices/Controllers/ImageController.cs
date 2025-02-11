@@ -130,6 +130,29 @@ public class ImageController : MatrixBaseController
             return ProgramState.State;
         }));
     }
-    
 
+    [HttpPost("base64/scale")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
+    public IActionResult ScaleImageBase64([FromBody] Base64Payload imagePayload, int scaleFactor = 1)
+    {
+        return Ok(ExecuteToMatrixResponse(() =>
+        {
+            if (string.IsNullOrWhiteSpace(imagePayload.Base64Image))
+            {
+                throw new InvalidImageException(WebConstants.MissingImage);
+            }
+
+            var imageBytes = Convert.FromBase64String(imagePayload.Base64Image);
+            var image = Image.Load<Rgb24>(imageBytes);
+
+            if (image.Height != MatrixUpdater.MatrixHeight || image.Width != MatrixUpdater.MatrixWidth)
+            {
+                throw new InvalidImageException(WebConstants.InvalidImageSize);
+            }
+
+            var resultImage = MatrixRenderer.RenderImage(image, scaleFactor);
+
+            return MatrixRenderer.ImageToBase64(resultImage);
+        }));
+    }
 }
