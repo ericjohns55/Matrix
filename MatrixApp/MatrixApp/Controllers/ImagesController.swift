@@ -42,7 +42,7 @@ class ImagesController: ObservableObject {
     func fetchMatrixRendering() async {
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
         
-        guard let image: UIImage = try? await client.GetAsImage(route: "image/render?trimHeader=true", body: nil) else {
+        guard let image: UIImage = try? await client.GetAsImage(route: "image/render?trimHeader=true&scaleFactor=4", body: nil) else {
             self.matrixRendering = failedToLoad
             return
         }

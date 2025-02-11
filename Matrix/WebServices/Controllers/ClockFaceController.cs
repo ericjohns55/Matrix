@@ -144,9 +144,9 @@ public class ClockFaceController : MatrixBaseController
 
     [HttpPost("render")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
-    public IActionResult RenderClockFace([FromBody] ClockFace clockFace, bool trimHeader = false)
+    public IActionResult RenderClockFace([FromBody] ClockFace clockFace, bool trimHeader = false, int scaleFactor = 1, bool useCurrentVariables = true)
     {
         return Ok(ExecuteToMatrixResponse(() =>
-            MatrixRenderer.ImageToBase64(MatrixRenderer.RenderClockFace(clockFace), trimHeader)));
+            MatrixRenderer.ImageToBase64(MatrixRenderer.RenderClockFace(clockFace, scaleFactor, useCurrentVariables), trimHeader)));
     }
 }

@@ -59,7 +59,7 @@ public class TextController : MatrixBaseController
 
     [HttpPost("plain/render")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
-    public async Task<IActionResult> RenderPlainText([FromBody] PlainTextPayload plainTextPayload, bool trimHeader = false)
+    public async Task<IActionResult> RenderPlainText([FromBody] PlainTextPayload plainTextPayload, bool trimHeader = false, int scaleFactor = 1)
     {
         return Ok(await ExecuteToMatrixResponseAsync(async () =>
         {
@@ -75,7 +75,7 @@ public class TextController : MatrixBaseController
             
             var plainText = new PlainText(plainTextPayload);
             
-            return MatrixRenderer.ImageToBase64(MatrixRenderer.RenderPlainText(plainText), trimHeader);
+            return MatrixRenderer.ImageToBase64(MatrixRenderer.RenderPlainText(plainText, scaleFactor), trimHeader);
         }));
     }
     
@@ -107,7 +107,7 @@ public class TextController : MatrixBaseController
     
     [HttpPost("scrolling/render")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
-    public async Task<IActionResult> RenderPlainText([FromBody] ScrollingTextPayload scrollingTextPayload, bool trimHeader = false)
+    public async Task<IActionResult> RenderPlainText([FromBody] ScrollingTextPayload scrollingTextPayload, bool trimHeader = false, int scaleFactor = 1)
     {
         return Ok(await ExecuteToMatrixResponseAsync(async() =>
         {
@@ -123,7 +123,7 @@ public class TextController : MatrixBaseController
             
             var scrollingText = new ScrollingText(scrollingTextPayload);
             
-            return MatrixRenderer.ImageToBase64(MatrixRenderer.RenderScrollingText(scrollingText), trimHeader);
+            return MatrixRenderer.ImageToBase64(MatrixRenderer.RenderScrollingText(scrollingText, scaleFactor), trimHeader);
         }));
     }
 

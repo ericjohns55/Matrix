@@ -60,7 +60,7 @@ class TextController: ObservableObject {
             let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
             let payload = validationResponse.payload!
                         
-            guard let image: UIImage = try? await client.GetAsImage(route: "text/plain/render?trimHeader=true", body: payload) else {
+            guard let image: UIImage = try? await client.GetAsImage(route: "text/plain/render?trimHeader=true&scaleFactor=4", body: payload) else {
                 return nil
             }
             

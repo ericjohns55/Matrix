@@ -108,4 +108,38 @@ public class VariableUtility
         
         return variablesDictionary;
     }
+
+    public static Dictionary<string, string> GetDefaultVariables()
+    {
+        var variablesDictionary = new Dictionary<string, string>();
+
+        variablesDictionary.Add(VariableConstants.HourVariable, "12");
+        variablesDictionary.Add(VariableConstants.MinuteVariable, "00");
+        variablesDictionary.Add(VariableConstants.SecondVariable, "00");
+        variablesDictionary.Add(VariableConstants.Hour24Variable, "00");
+        variablesDictionary.Add(VariableConstants.AmPmVariable, "am");
+        variablesDictionary.Add(VariableConstants.TimeFormattedVariable, "12:00am");
+        variablesDictionary.Add(VariableConstants.FormattedDateVariable, "01-01-0000");
+        variablesDictionary.Add(VariableConstants.MonthNameVariable, "January");
+        variablesDictionary.Add(VariableConstants.DayNameVariable, "Monday");
+        variablesDictionary.Add(VariableConstants.MonthNumVariable, "0");
+        variablesDictionary.Add(VariableConstants.MonthDayVariable, "1");
+        variablesDictionary.Add(VariableConstants.WeekDayNumVariable, "0");
+        variablesDictionary.Add(VariableConstants.YearVariable, "0000");
+        variablesDictionary.Add(VariableConstants.TimerHourVariable, "1");
+        variablesDictionary.Add(VariableConstants.TimerMinuteVariable, "59");
+        variablesDictionary.Add(VariableConstants.TimerSecondVariable, "59");
+        variablesDictionary.Add(VariableConstants.TimerFormattedVariable, "59:59");
+        variablesDictionary.Add(VariableConstants.TempVariable, "50");
+        variablesDictionary.Add(VariableConstants.TempLowVariable, "50");
+        variablesDictionary.Add(VariableConstants.TempHighVariable, "50");
+        variablesDictionary.Add(VariableConstants.TempFeelVariable, "50");
+        variablesDictionary.Add(VariableConstants.WindSpeedVariable, "1.0");
+        variablesDictionary.Add(VariableConstants.HumidityVariable, "50");
+        variablesDictionary.Add(VariableConstants.ForecastCurrentVariable, "Clear");
+        variablesDictionary.Add(VariableConstants.ForecastCurrentShortVariable, "Clear");
+        variablesDictionary.Add(VariableConstants.ForecastDay, "Clear");
+        
+        return variablesDictionary;
+    }
 }

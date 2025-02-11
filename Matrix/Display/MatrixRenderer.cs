@@ -12,7 +12,7 @@ namespace Matrix.Display;
 
 public static class MatrixRenderer
 {
-    public static Image<Rgb24> RenderClockFace(ClockFace? clockFace) 
+    public static Image<Rgb24> RenderClockFace(ClockFace? clockFace, int scaleFactor = 1, bool useCurrentVariables = true) 
     {
         if (clockFace == null)
         {
@@ -23,14 +23,15 @@ public static class MatrixRenderer
 
         foreach (var textLine in clockFace.TextLines)
         {
-            var parsedLine = TextLineParser.ParseTextLine(textLine, ProgramState.CurrentVariables);
+            var variables = useCurrentVariables ? ProgramState.CurrentVariables : VariableUtility.GetDefaultVariables();
+            var parsedLine = TextLineParser.ParseTextLine(textLine, variables);
             DrawParsedTextLine(image, parsedLine);
         }
 
-        return image;
+        return OptionallyScaleImage(image, scaleFactor);
     }
 
-    public static Image<Rgb24> RenderPlainText(PlainText? plainText)
+    public static Image<Rgb24> RenderPlainText(PlainText? plainText, int scaleFactor = 1)
     {
         if (plainText == null)
         {
@@ -44,10 +45,10 @@ public static class MatrixRenderer
             DrawParsedTextLine(image, parsedTextLine);
         }
 
-        return image;
+        return OptionallyScaleImage(image, scaleFactor);
     }
 
-    public static Image<Rgb24> RenderScrollingText(ScrollingText? scrollingText)
+    public static Image<Rgb24> RenderScrollingText(ScrollingText? scrollingText, int scaleFactor = 1)
     {
         if (scrollingText == null)
         {
@@ -58,7 +59,17 @@ public static class MatrixRenderer
 
         DrawParsedTextLine(image, scrollingText.GetParsedTextLine(), true);
 
-        return image;
+        return OptionallyScaleImage(image, scaleFactor);
+    }
+
+    public static Image<Rgb24> RenderImage(Image<Rgb24>? image, int scaleFactor = 1)
+    {
+        if (image == null)
+        {
+            return new Image<Rgb24>(MatrixUpdater.MatrixWidth, MatrixUpdater.MatrixHeight);
+        }
+        
+        return OptionallyScaleImage(image, scaleFactor);
     }
 
     private static void DrawParsedTextLine(Image<Rgb24> image, ParsedTextLine parsedTextLine, bool resetX = false)
@@ -92,6 +103,35 @@ public static class MatrixRenderer
                 }
             }
         }
+    }
+
+    private static Image<Rgb24> OptionallyScaleImage(Image<Rgb24> image, int scaleFactor)
+    {
+        if (scaleFactor <= 1)
+        {
+            return image;
+        }
+        
+        var scaledImage = new Image<Rgb24>(image.Width * scaleFactor, image.Height * scaleFactor);
+
+        for (int i = 0; i < image.Width; i++)
+        {
+            for (int j = 0; j < image.Height; j++)
+            {
+                if (image[i, j].R != 0 || image[i, j].G != 0 || image[i, j].B != 0)
+                {
+                    for (int x = 0; x < scaleFactor; x++)
+                    {
+                        for (int y = 0; y < scaleFactor; y++)
+                        {
+                            scaledImage[i * scaleFactor + x, j * scaleFactor + y] = image[i, j];
+                        }
+                    }
+                }
+            }
+        }
+        
+        return scaledImage;
     }
 
     public static string ImageToBase64(Image<Rgb24>? image, bool trimHeader = false)

@@ -33,7 +33,7 @@ public class ImageController : MatrixBaseController
     
     [HttpGet("render")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
-    public IActionResult RenderCurrent(bool trimHeader = false)
+    public IActionResult RenderCurrent(bool trimHeader = false, int scaleFactor = 1)
     {
         return Ok(ExecuteToMatrixResponse(() =>
         {
@@ -46,23 +46,23 @@ public class ImageController : MatrixBaseController
                         MatrixUpdater.OverridenClockFace : 
                         MatrixMain.MatrixUpdater.CurrentClockFace;
                     
-                    image = MatrixRenderer.RenderClockFace(clockFace);
+                    image = MatrixRenderer.RenderClockFace(clockFace, scaleFactor);
                     
                     break;
                 case MatrixState.Timer:
-                    image = MatrixRenderer.RenderClockFace(MatrixMain.MatrixUpdater.TimerClockFace);
+                    image = MatrixRenderer.RenderClockFace(MatrixMain.MatrixUpdater.TimerClockFace, scaleFactor);
                     
                     break;
                 case MatrixState.Text:
-                    image = MatrixRenderer.RenderPlainText(ProgramState.PlainText);
+                    image = MatrixRenderer.RenderPlainText(ProgramState.PlainText, scaleFactor);
                     
                     break;
                 case MatrixState.ScrollingText:
-                    image = MatrixRenderer.RenderScrollingText(ProgramState.ScrollingText);
+                    image = MatrixRenderer.RenderScrollingText(ProgramState.ScrollingText, scaleFactor);
 
                     break;
                 case MatrixState.Image:
-                    image = ProgramState.Image;
+                    image = MatrixRenderer.RenderImage(ProgramState.Image, scaleFactor);
                     
                     break;
                 default:
