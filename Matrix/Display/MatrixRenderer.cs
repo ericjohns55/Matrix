@@ -82,7 +82,7 @@ public static class MatrixRenderer
         BdfFont font = new BdfFont(parsedTextLine.FontLocation!);
         var mapping = font.GetMapOfString(parsedTextLine.ParsedText);
         
-        var imageXOffset = resetX ? 0 : parsedTextLine.XPosition;
+        var imageXOffset = resetX ? 0 : parsedTextLine.XPosition + 1;
         var imageYOffset = parsedTextLine.YPosition - parsedTextLine.FontHeight!.Value + 1;
         
         var textColor = new Rgb24(

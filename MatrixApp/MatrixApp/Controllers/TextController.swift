@@ -8,10 +8,16 @@
 import UIKit
 import Foundation
 
-struct TextValidationResponse {
+struct PlainTextValidationResponse {
     var successfullyValidated: Bool
     var invalidFields: String
     var payload: PlainTextPayload?
+}
+
+struct ScrollingTextValidationResponse {
+    var successfullyValidated: Bool
+    var invalidFields: String
+    var payload: ScrollingTextPayload?
 }
 
 @MainActor
@@ -23,7 +29,7 @@ class TextController: ObservableObject {
     
     @Published var renderedPreview: UIImage? = nil
     
-    func validatePlainText(text: String, color: MatrixColor?, font: MatrixFont?, alignment: String, splitByWord: Bool) -> TextValidationResponse {
+    func validatePlainText(text: String, color: MatrixColor?, font: MatrixFont?, alignment: String, splitByWord: Bool) -> PlainTextValidationResponse {
         var invalidFieldsList: [String] = []
         
         if (text.isEmpty) {
@@ -50,10 +56,44 @@ class TextController: ObservableObject {
             payload = PlainTextPayload(text: text, textAlignment: alignment, splitByWord: splitByWord, matrixColorId: color!.id, matrixFontId: font!.id)
         }
         
-        return TextValidationResponse(successfullyValidated: invalidFieldsList.isEmpty, invalidFields: invalidFieldsFormatted, payload: payload)
+        return PlainTextValidationResponse(successfullyValidated: invalidFieldsList.isEmpty, invalidFields: invalidFieldsFormatted, payload: payload)
     }
     
-    func tryRenderPreview(text: String, color: MatrixColor?, font: MatrixFont?, alignment: String, splitByWord: Bool) async -> UIImage? {
+    func validateScrollingText(text: String, scrollingDelay: Int, iterations: Int, color: MatrixColor?, font: MatrixFont?) -> ScrollingTextValidationResponse {
+        var invalidFieldsList: [String] = []
+        
+        if (text.isEmpty) {
+            invalidFieldsList.append("Text")
+        }
+        
+        if (scrollingDelay < 0) {
+            invalidFieldsList.append("ScrollingDelay")
+        }
+        
+        if (iterations < -1) {
+            invalidFieldsList.append("Iterations")
+        }
+        
+        if (color == nil) {
+            invalidFieldsList.append("Color")
+        }
+        
+        if (font == nil) {
+            invalidFieldsList.append("Font")
+        }
+        
+        
+        let invalidFieldsFormatted = invalidFieldsList.isEmpty ? TextController.validText : invalidFieldsList.joined(separator: ", ")
+        
+        var payload: ScrollingTextPayload? = nil
+        if (invalidFieldsList.isEmpty) {
+            payload = ScrollingTextPayload(text: text, scrollingDelay: scrollingDelay, iterations: iterations, matrixColorId: color!.id, matrixFontId: font!.id)
+        }
+        
+        return ScrollingTextValidationResponse(successfullyValidated: invalidFieldsList.isEmpty, invalidFields: invalidFieldsFormatted, payload: payload)
+    }
+    
+    func tryRenderPlainTextPreview(text: String, color: MatrixColor?, font: MatrixFont?, alignment: String, splitByWord: Bool) async -> UIImage? {
         let validationResponse = validatePlainText(text: text, color: color, font: font, alignment: alignment, splitByWord: splitByWord)
         
         if (validationResponse.successfullyValidated) {
@@ -61,6 +101,23 @@ class TextController: ObservableObject {
             let payload = validationResponse.payload!
                         
             guard let image: UIImage = try? await client.GetAsImage(route: "text/plain/render?trimHeader=true&scaleFactor=4", body: payload) else {
+                return nil
+            }
+            
+            return image
+        }
+        
+        return nil
+    }
+    
+    func tryRenderScrollingTextPreview(text: String, scrollingInterval: Int, iterations: Int, color: MatrixColor?, font: MatrixFont?) async -> UIImage? {
+        let validationResponse = validateScrollingText(text: text, scrollingDelay: scrollingInterval, iterations: iterations, color: color, font: font)
+        
+        if (validationResponse.successfullyValidated) {
+            let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+            let payload = validationResponse.payload!
+            
+            guard let image: UIImage = try? await client.GetAsImage(route: "text/scrolling/render?trimHeader=true&scaleFactor=4", body: payload) else {
                 return nil
             }
             
@@ -78,6 +135,20 @@ class TextController: ObservableObject {
             let payload = validationResponse.payload!
             
             guard let _: MatrixResponse<PlainText> = try? await client.PostRequest(route: "text/plain", body: payload) else {
+                return
+            }
+        }
+    }
+    
+    func tryPostScrollingText(text: String, scrollingInterval: Int, iterations: Int, color: MatrixColor?, font: MatrixFont?) async {
+        let validationResponse = validateScrollingText(text: text, scrollingDelay: scrollingInterval, iterations: iterations, color: color, font: font)
+        
+        
+        if (validationResponse.successfullyValidated) {
+            let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+            let payload = validationResponse.payload!
+            
+            guard let _: MatrixResponse<ScrollingText> = try? await client.PostRequest(route: "text/scrolling", body: payload) else {
                 return
             }
         }

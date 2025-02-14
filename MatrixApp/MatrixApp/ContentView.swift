@@ -14,6 +14,10 @@ enum AppPage {
     case image, text, overview, clockFaces, timers
 }
 
+enum TextType {
+    case stationary, scrolling
+}
+
 struct ContentView: View {    
     @StateObject var matrixController = MatrixController()
     @StateObject var textController = TextController()
@@ -21,15 +25,18 @@ struct ContentView: View {
     
     @State private var selectedTab: AppPage = .text
     
+    @State private var textType: TextType = .stationary
     @State private var currentTextImage: UIImage? = nil
     @State private var textControllerText: String = ""
+    @State private var textScrollIterations: Int = 3
+    @State private var textScrollInterval: Int = 10
     @State private var selectedTextAlignment: String = "Center"
     @State private var selectedColor: MatrixColor? = nil
     @State private var selectedFont: MatrixFont? = nil
     @State private var textSplitByWord: Bool = true
     
     @State private var showAlert = false
-    
+        
     func formatText() -> String {
         var text = "Text: [TEXT]\nAlignment: [ALIGNMENT]\nColor: [COLOR]\nFont: [FONT]"
         text = text.replacingOccurrences(of: "[TEXT]", with: textControllerText)
@@ -98,9 +105,19 @@ struct ContentView: View {
                     .resizable()
                     .scaledToFit()
                     .padding(20)
-                    .frame(width: 256, height: 256)
+                    .frame(width: 224, height: 224)
                     .border(.gray)
                 
+                Picker("Server Config", selection: $textType) {
+                    Text("Stationary").tag(TextType.stationary)
+                    Text("Scrolling").tag(TextType.scrolling)
+                }.pickerStyle(.segmented)
+                    .onChange(of: textType, {
+                        Task {
+                            await optionallyUpdateTextPreview()
+                        }
+                    })
+                    .padding(10)
                 
                 LabeledContent {
                     TextField("(example text)", text: $textControllerText)
@@ -113,21 +130,35 @@ struct ContentView: View {
                 } label: {
                     Text("Text Content")
                 }.padding(10)
-                                
-                LabeledContent {
-                    Picker("Text Orientation", selection: $selectedTextAlignment) {
-                        Text("Left").tag("Left")
-                        Text("Center").tag("Center")
-                        Text("Right").tag("Right")
-                    }
-                    .onChange(of: selectedTextAlignment) {
-                        Task {
-                            await optionallyUpdateTextPreview()
+                
+                if (textType == .stationary) {
+                    LabeledContent {
+                        Picker("Text Orientation", selection: $selectedTextAlignment) {
+                            Text("Left").tag("Left")
+                            Text("Center").tag("Center")
+                            Text("Right").tag("Right")
                         }
-                    }
-                } label: {
-                    Text("Text Orientation")
-                }.padding(10)
+                        .onChange(of: selectedTextAlignment) {
+                            Task {
+                                await optionallyUpdateTextPreview()
+                            }
+                        }
+                    } label: {
+                        Text("Text Orientation")
+                    }.padding(10)
+                } else {
+                    LabeledContent {
+                        TextField("(number of repetitions)", value: $textScrollIterations, format: .number)
+                            .multilineTextAlignment(.trailing)
+                            .onSubmit {
+                                Task {
+                                    await optionallyUpdateTextPreview()
+                                }
+                            }
+                    } label: {
+                        Text("Iterations")
+                    }.padding(15)
+                }
                 
                 LabeledContent {
                     Picker("Color", selection: $selectedColor) {
@@ -171,23 +202,37 @@ struct ContentView: View {
                     Text("Font")
                 }.padding(10)
                 
-                LabeledContent {
-                    Toggle(isOn: $textSplitByWord) {
-                        EmptyView()
-                    }
-                    .toggleStyle(SwitchToggleStyle(tint: .blue))
-                    .onChange(of: textSplitByWord) {
-                        Task {
-                            await optionallyUpdateTextPreview()
+                if (textType == .stationary) {
+                    LabeledContent {
+                        Toggle(isOn: $textSplitByWord) {
+                            EmptyView()
                         }
-                    }
-                } label: {
-                    Text("Split by Word")
-                }.padding(10)
+                        .toggleStyle(SwitchToggleStyle(tint: .blue))
+                        .onChange(of: textSplitByWord) {
+                            Task {
+                                await optionallyUpdateTextPreview()
+                            }
+                        }
+                    } label: {
+                        Text("Split by Word")
+                    }.padding(10)
+                } else {
+                    LabeledContent {
+                        TextField("(interval in milliseconds)", value: $textScrollInterval, format: .number)
+                            .multilineTextAlignment(.trailing)
+                            .onSubmit {
+                                Task {
+                                    await optionallyUpdateTextPreview()
+                                }
+                            }
+                    } label: {
+                        Text("Scroll Interval (ms)")
+                    }.padding(16)
+                }
                 
                 Button(action: {
                     Task {
-                        await textController.tryPostText(text: textControllerText, color: selectedColor, font: selectedFont, alignment: selectedTextAlignment, splitByWord: textSplitByWord)
+                        await tryPostText()
                     }
                 }) {
                     Text("Send to Matrix")
@@ -195,25 +240,11 @@ struct ContentView: View {
                 .padding(10)
                 .frame(width: 256, height: 48)
                 .border(.gray)
-                
-//                HStack {
-//                    Button("Show Preview") {
-//                        showAlert = true
-//                    }
-//                    .alert(textController.validatePlainText(text: textControllerText, color: selectedColor, font: selectedFont, alignment: selectedTextAlignment).invalidFields, isPresented: $showAlert) {
-//                        Button("OK", role: .cancel) {}
-//                    }
-//                    .padding(20)
-//                    .frame(minWidth: 0, maxWidth: .infinity)
-//                    .border(.gray)
-//                }
             }
             .tabItem {
                 Label("Text", systemImage: "textformat")
             }.tag(AppPage.text)
-    
-            
-            
+                
             VStack {
                 VStack(spacing: 0) {
                     Button(action: {
@@ -297,12 +328,26 @@ struct ContentView: View {
     }
     
     private func optionallyUpdateTextPreview() async {
-        let renderedImage = await textController.tryRenderPreview(text: textControllerText, color: selectedColor, font: selectedFont, alignment: selectedTextAlignment, splitByWord: textSplitByWord)
+        var renderedImage: UIImage? = nil
+        
+        if (textType == .stationary) {
+            renderedImage = await textController.tryRenderPlainTextPreview(text: textControllerText, color: selectedColor, font: selectedFont, alignment: selectedTextAlignment, splitByWord: textSplitByWord)
+        } else {
+            renderedImage = await textController.tryRenderScrollingTextPreview(text: textControllerText, scrollingInterval: textScrollInterval, iterations: textScrollIterations, color: selectedColor, font: selectedFont)
+        }
         
         if (renderedImage != nil) {
             currentTextImage = renderedImage
         } else {
             currentTextImage = imagesController.invalidContent
+        }
+    }
+    
+    private func tryPostText() async {
+        if (textType == .stationary) {
+            await textController.tryPostText(text: textControllerText, color: selectedColor, font: selectedFont, alignment: selectedTextAlignment, splitByWord: textSplitByWord)
+        } else {
+            await textController.tryPostScrollingText(text: textControllerText, scrollingInterval: textScrollInterval, iterations: textScrollIterations, color: selectedColor, font: selectedFont)
         }
     }
 }

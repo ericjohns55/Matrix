@@ -85,3 +85,11 @@ struct PlainTextPayload: Codable {
 struct ScrollingText: Decodable {
     let scrollingDelay: Int
 }
+
+struct ScrollingTextPayload: Codable {
+    let text: String
+    let scrollingDelay: Int
+    let iterations: Int
+    let matrixColorId: Int
+    let matrixFontId: Int
+}
