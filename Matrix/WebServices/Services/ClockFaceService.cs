@@ -4,6 +4,7 @@ using Matrix.Data.Models.Web;
 using Matrix.Data.Models.TimeValidation;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
+using Matrix.Display;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matrix.WebServices.Services;
@@ -18,11 +19,15 @@ public class ClockFaceService : IClockFaceService
         _matrixContext = matrixContext;
     }
     
-    public Task<List<ClockFace>> GetAllClockFaces(SearchFilter filter = SearchFilter.Active, bool timerFace = false)
+    public async Task<List<ClockFace>> GetAllClockFaces(
+        SearchFilter filter = SearchFilter.Active,
+        bool timerFace = false,
+        bool render = false, 
+        int scaleFactor = 1)
     {
         if (filter == SearchFilter.AllResults)
         {
-            return _matrixContext.ClockFace
+            return await _matrixContext.ClockFace
                 .Where(face => face.IsTimerFace == timerFace)
                 .Include(face => face.TimePeriods)
                 .Include(face => face.TextLines).ThenInclude(line => line.Color)
@@ -32,14 +37,25 @@ public class ClockFaceService : IClockFaceService
         
         var searchForDeleted = filter == SearchFilter.Deleted;
 
-        return _matrixContext.ClockFace.Where(face => face.Deleted == searchForDeleted && face.IsTimerFace == timerFace)
+        var clockFaces = await _matrixContext.ClockFace.Where(face => face.Deleted == searchForDeleted && face.IsTimerFace == timerFace)
             .Include(face => face.TimePeriods)
             .Include(face => face.TextLines).ThenInclude(line => line.Color)
             .Include(face => face.TextLines).ThenInclude(line => line.Font)
             .ToListAsync();
+
+        if (render)
+        {
+            clockFaces.ForEach(face =>
+            {
+                var image = MatrixRenderer.RenderClockFace(face, scaleFactor);
+                face.Base64Rendering = MatrixRenderer.ImageToBase64(image, true);
+            });
+        }
+
+        return clockFaces;
     }
 
-    public async Task<ClockFace> GetClockFace(int faceId)
+    public async Task<ClockFace> GetClockFace(int faceId, bool render = false, int scaleFactor = 1)
     {
         var clockFace = await _matrixContext.ClockFace.Where(face => face.Id == faceId)
             .Include(face => face.TimePeriods)
@@ -55,6 +71,12 @@ public class ClockFaceService : IClockFaceService
         if (clockFace.IsTimerFace)
         {
             throw new ClockFaceException(WebConstants.ClockFaceIsTimer);
+        }
+
+        if (render)
+        {
+            var image = MatrixRenderer.RenderClockFace(clockFace, scaleFactor);
+            clockFace.Base64Rendering = MatrixRenderer.ImageToBase64(image, true);
         }
 
         return clockFace;

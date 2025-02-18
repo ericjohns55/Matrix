@@ -80,26 +80,26 @@ public class ClockFaceController : MatrixBaseController
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixListResponse<ClockFace>))]
-    public async Task<IActionResult> GetAllClockFaces()
+    public async Task<IActionResult> GetAllClockFaces(bool timerFace = false, bool render = false, int scaleFactor = 1)
     {
         return Ok(await ExecuteToMatrixListResponseAsync(() =>
-            _clockFaceService.GetAllClockFaces()));
+            _clockFaceService.GetAllClockFaces(SearchFilter.Active, timerFace, render, scaleFactor)));
     }
 
     [HttpGet("deleted")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixListResponse<ClockFace>))]
-    public async Task<IActionResult> GetDeletedClockFaces()
+    public async Task<IActionResult> GetDeletedClockFaces(bool timerFace = false, bool render = false, int scaleFactor = 1)
     {
         return Ok(await ExecuteToMatrixListResponseAsync(() =>
-            _clockFaceService.GetAllClockFaces(SearchFilter.Deleted)));
+            _clockFaceService.GetAllClockFaces(SearchFilter.Deleted, timerFace, render, scaleFactor)));
     }
 
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ClockFace>))]
-    public async Task<IActionResult> GetClockFace(int id)
+    public async Task<IActionResult> GetClockFace(int id, bool render = false, int scaleFactor = 1)
     {
         return Ok(await ExecuteToMatrixResponseAsync(() => 
-            _clockFaceService.GetClockFace(id)));
+            _clockFaceService.GetClockFace(id, render, scaleFactor)));
     }
 
     [HttpPost]

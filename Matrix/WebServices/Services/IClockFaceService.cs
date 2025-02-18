@@ -6,9 +6,13 @@ namespace Matrix.WebServices.Services;
 
 public interface IClockFaceService
 {
-    public Task<List<ClockFace>> GetAllClockFaces(SearchFilter filter = SearchFilter.Active, bool timerFace = false);
+    public Task<List<ClockFace>> GetAllClockFaces(
+        SearchFilter filter = SearchFilter.Active,
+        bool timerFace = false,
+        bool render = false, 
+        int scaleFactor = 1);
     public Task<ClockFace> GetClockFaceForTime(TimePayload timePayload);
-    public Task<ClockFace> GetClockFace(int faceId);
+    public Task<ClockFace> GetClockFace(int faceId, bool render = false, int scaleFactor = 1);
     public Task<ClockFace> UpdateClockFace(int faceId, ClockFace updatedFace);
     public Task<ClockFace> AddClockFace(ClockFace clockFace);
     public Task<int> RemoveClockFace(int faceId);
