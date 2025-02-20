@@ -60,17 +60,17 @@ public class MatrixSeeder
         
         _logger.LogInformation("Seeding matrix colors ...");
         
-        var red = new MatrixColor() { Name = "red", Red = 128, Green = 0, Blue = 0, Deleted = false };
-        var orange = new MatrixColor() { Name = "orange", Red = 253, Green = 88, Blue = 0, Deleted = false };
-        var yellow = new MatrixColor() { Name = "yellow", Red = 255, Green = 228, Blue = 0, Deleted = false };
-        var green = new MatrixColor() { Name = "green", Red = 0, Green = 160, Blue = 0, Deleted = false };
-        var blue = new MatrixColor() { Name = "blue", Red = 0, Green = 64, Blue = 255, Deleted = false };
-        var purple = new MatrixColor() { Name = "purple", Red = 128, Green = 0, Blue = 128, Deleted = false };
-        var pink = new MatrixColor() { Name = "pink", Red = 255, Green = 0, Blue = 255, Deleted = false };
-        var white = new MatrixColor() { Name = "white", Red = 255, Green = 255, Blue = 255, Deleted = false };
-        var gray = new MatrixColor() { Name = "gray", Red = 128, Green = 128, Blue = 128, Deleted = false };
-        var black = new MatrixColor() { Name = "black", Red = 0, Green = 0, Blue = 0, Deleted = false };
-        var brown = new MatrixColor() { Name = "brown", Red = 101, Green = 67, Blue = 33, Deleted = false };
+        var red = new MatrixColor() { Name = "Red", Red = 128, Green = 0, Blue = 0, Deleted = false };
+        var orange = new MatrixColor() { Name = "Orange", Red = 253, Green = 88, Blue = 0, Deleted = false };
+        var yellow = new MatrixColor() { Name = "Yellow", Red = 255, Green = 228, Blue = 0, Deleted = false };
+        var green = new MatrixColor() { Name = "Green", Red = 0, Green = 160, Blue = 0, Deleted = false };
+        var blue = new MatrixColor() { Name = "Blue", Red = 0, Green = 64, Blue = 255, Deleted = false };
+        var purple = new MatrixColor() { Name = "Purple", Red = 128, Green = 0, Blue = 128, Deleted = false };
+        var pink = new MatrixColor() { Name = "Pink", Red = 255, Green = 0, Blue = 255, Deleted = false };
+        var white = new MatrixColor() { Name = "White", Red = 255, Green = 255, Blue = 255, Deleted = false };
+        var gray = new MatrixColor() { Name = "Gray", Red = 128, Green = 128, Blue = 128, Deleted = false };
+        var black = new MatrixColor() { Name = "Black", Red = 0, Green = 0, Blue = 0, Deleted = false };
+        var brown = new MatrixColor() { Name = "Brown", Red = 101, Green = 67, Blue = 33, Deleted = false };
         
         await _matrixContext.AddRangeAsync(red, orange, yellow, green, blue, purple, pink, white, gray, black, brown);
         await _matrixContext.SaveChangesAsync();

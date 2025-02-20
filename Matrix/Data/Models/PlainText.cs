@@ -65,6 +65,7 @@ public class PlainText
                 YPosition = yPosition(line.LineNumber),
                 FontLocation = Font.FileLocation,
                 FontHeight = Font.Height,
+                FontWidth = Font.Width,
                 Font = font,
                 Color = color
             });

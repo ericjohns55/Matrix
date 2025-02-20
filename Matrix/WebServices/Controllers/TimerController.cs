@@ -4,6 +4,7 @@ using Matrix.Data.Models;
 using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
+using Matrix.Display;
 using Matrix.WebServices.Authentication;
 using Matrix.WebServices.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -133,9 +134,12 @@ public class TimerController : MatrixBaseController
         return Ok(ExecuteToMatrixResponse(() =>
         {
             CheckIfNullTimer();
-            
-            ProgramState.Timer?.Modify(payload);
 
+            if (ValidateModification(ProgramState.Timer!, payload).Count == 0)
+            {
+                ProgramState.Timer?.Modify(payload);
+            }
+            
             return ProgramState.Timer;
         }));
     }
@@ -152,6 +156,25 @@ public class TimerController : MatrixBaseController
             ProgramState.Timer?.Reset();
 
             return ProgramState.Timer;
+        }));
+    }
+    
+    [HttpPost]
+    [Route("render")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
+    public async Task<IActionResult> RenderTimer([FromBody] Timer timer, bool trimHeader = false, int scaleFactor = 1)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+        {
+            var timerFace = await _clockFaceService.GetTimerClockFace(timer.TimerFaceId);
+
+            if (timerFace == null)
+            {
+                throw new ClockFaceException(WebConstants.ClockFaceNull);
+            }
+
+            var rendering = MatrixRenderer.RenderTimer(timer, timerFace, scaleFactor);
+            return MatrixRenderer.ImageToBase64(rendering, trimHeader);
         }));
     }
     

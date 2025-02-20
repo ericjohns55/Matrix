@@ -107,7 +107,7 @@ public class TextController : MatrixBaseController
     
     [HttpPost("scrolling/render")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<string>))]
-    public async Task<IActionResult> RenderPlainText([FromBody] ScrollingTextPayload scrollingTextPayload, bool trimHeader = false, int scaleFactor = 1)
+    public async Task<IActionResult> RenderPlainText([FromBody] ScrollingTextPayload scrollingTextPayload, bool trimHeader = false, int scaleFactor = 1, bool cropToMatrixSize = true)
     {
         return Ok(await ExecuteToMatrixResponseAsync(async() =>
         {
@@ -123,7 +123,7 @@ public class TextController : MatrixBaseController
             
             var scrollingText = new ScrollingText(scrollingTextPayload);
             
-            return MatrixRenderer.ImageToBase64(MatrixRenderer.RenderScrollingText(scrollingText, scaleFactor), trimHeader);
+            return MatrixRenderer.ImageToBase64(MatrixRenderer.RenderScrollingText(scrollingText, scaleFactor, cropToMatrixSize), trimHeader);
         }));
     }
 

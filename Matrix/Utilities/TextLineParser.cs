@@ -25,6 +25,7 @@ public class TextLineParser
             ParsedText = parsedText,
             FontLocation = textLine.Font.FileLocation,
             FontHeight = textLine.Font.Height,
+            FontWidth = textLine.Font.Width,
             XPosition = xPos,
             YPosition = yPos,
             Font = font,

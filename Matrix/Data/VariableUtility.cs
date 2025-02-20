@@ -89,8 +89,8 @@ public class VariableUtility
         variablesDictionary.Add(VariableConstants.WeekDayNumVariable, ((int) time.DayOfWeek).ToString());
         variablesDictionary.Add(VariableConstants.YearVariable, time.Year.ToString());
         variablesDictionary.Add(VariableConstants.TimerHourVariable, timer?.Hour.ToString() ?? "-1");
-        variablesDictionary.Add(VariableConstants.TimerMinuteVariable, timer?.Minute.ToString() ?? "-1");
-        variablesDictionary.Add(VariableConstants.TimerSecondVariable, timer?.Second.ToString() ?? "-1");
+        variablesDictionary.Add(VariableConstants.TimerMinuteVariable, timer?.Minute.ToString("D2") ?? "-1");
+        variablesDictionary.Add(VariableConstants.TimerSecondVariable, timer?.Second.ToString("D2") ?? "-1");
         variablesDictionary.Add(VariableConstants.TimerFormattedVariable, ParseTimer(timer));
 
         if (weatherData != null)

@@ -7,6 +7,7 @@ using Matrix.Utilities;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
+using Timer = Matrix.Data.Models.Timer;
 
 namespace Matrix.Display;
 
@@ -31,6 +32,36 @@ public static class MatrixRenderer
         return OptionallyScaleImage(image, scaleFactor);
     }
 
+    public static Image<Rgb24> RenderTimer(Timer? timer, ClockFace? clockFace, int scaleFactor = 1)
+    {
+        if (clockFace == null)
+        {
+            throw new ClockFaceException(WebConstants.ClockFaceNull);
+        }
+
+        if (timer == null)
+        {
+            throw new TimerException(WebConstants.TimerNull);
+        }
+        
+        var image = new Image<Rgb24>(MatrixUpdater.MatrixWidth, MatrixUpdater.MatrixHeight);
+        
+        // copying variables
+        var variables = ProgramState.CurrentVariables.ToDictionary(v => v.Key, v => v.Value);
+        variables[VariableConstants.TimerHourVariable] = timer.Hour.ToString();
+        variables[VariableConstants.TimerMinuteVariable] = timer.Minute.ToString("D2");
+        variables[VariableConstants.TimerSecondVariable] = timer.Second.ToString("D2");
+        variables[VariableConstants.TimerFormattedVariable] = new MatrixTimer(timer).GetFormattedTimer();
+
+        foreach (var textLine in clockFace.TextLines)
+        {
+            var parsedLine = TextLineParser.ParseTextLine(textLine, variables);
+            DrawParsedTextLine(image, parsedLine);
+        }
+
+        return OptionallyScaleImage(image, scaleFactor);
+    }
+
     public static Image<Rgb24> RenderPlainText(PlainText? plainText, int scaleFactor = 1)
     {
         if (plainText == null)
@@ -48,16 +79,25 @@ public static class MatrixRenderer
         return OptionallyScaleImage(image, scaleFactor);
     }
 
-    public static Image<Rgb24> RenderScrollingText(ScrollingText? scrollingText, int scaleFactor = 1)
+    public static Image<Rgb24> RenderScrollingText(ScrollingText? scrollingText, int scaleFactor = 1, bool cropToMatrixSize = true)
     {
         if (scrollingText == null)
         {
             throw new MatrixEntityNotFoundException(WebConstants.TextNotFound);
         }
-        
-        var image = new Image<Rgb24>(MatrixUpdater.MatrixWidth, MatrixUpdater.MatrixHeight);
 
-        DrawParsedTextLine(image, scrollingText.GetParsedTextLine(), true);
+        var parsedTextLine = scrollingText.GetParsedTextLine();
+        
+        int width = MatrixUpdater.MatrixWidth;
+
+        if (!cropToMatrixSize && parsedTextLine.FontWidth != null)
+        {
+            width += parsedTextLine.ParsedText.Length * parsedTextLine.FontWidth.Value;
+        }
+        
+        var image = new Image<Rgb24>(width, MatrixUpdater.MatrixHeight);
+
+        DrawParsedTextLine(image, parsedTextLine, true);
 
         return OptionallyScaleImage(image, scaleFactor);
     }
@@ -74,7 +114,7 @@ public static class MatrixRenderer
 
     private static void DrawParsedTextLine(Image<Rgb24> image, ParsedTextLine parsedTextLine, bool resetX = false)
     {
-        if (parsedTextLine.FontHeight == null || parsedTextLine.FontHeight == null)
+        if (parsedTextLine.FontHeight == null)
         {
             throw new FontException(WebConstants.MissingFontInformation);
         }
