@@ -8,6 +8,7 @@
 // https://paulallies.medium.com/swiftui-5-5-api-data-to-list-view-776c69a456d3
 // https://www.swiftbysundell.com/articles/building-an-async-swiftui-button/
 
+import Combine
 import SwiftUI
 
 enum AppPage {
@@ -23,7 +24,7 @@ struct ContentView: View {
     @StateObject var textController = TextController()
     @StateObject var imagesController = ImagesController()
     
-    @State private var selectedTab: AppPage = .text
+    @State private var selectedTab: AppPage = .timers
     
     @State private var textType: TextType = .stationary
     @State private var currentTextImage: UIImage? = nil
@@ -36,6 +37,15 @@ struct ContentView: View {
     @State private var textSplitByWord: Bool = true
     
     @State private var showAlert = false
+    @State private var scrollingOffset: Int = 0
+    
+    private var longImage: UIImage = UIImage(named: "LongImage")!
+    
+    @State private var textAnimationTimer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
+    @State private var textAnimationTimerRunning = false
+    @State private var offsetBounds = 0
+    @State private var currentOffset = 0
+    @State private var steps = 0
         
     func formatText() -> String {
         var text = "Text: [TEXT]\nAlignment: [ALIGNMENT]\nColor: [COLOR]\nFont: [FONT]"
@@ -63,6 +73,7 @@ struct ContentView: View {
             .fontWeight(.bold)
             .font(.system(size: 32.0))
             .task {
+                await matrixController.getProgramOverview()
                 await textController.loadAllData()
                 await imagesController.fetchMatrixRendering()
             }
@@ -320,11 +331,61 @@ struct ContentView: View {
 //                }.task {
 //                    await colors.getColors()
 //                }
+                
+                Image(uiImage: longImage)
+                    .resizable()
+                    .scaledToFill()
+                    .clipped()
+                    .offset(x: CGFloat(currentOffset))
+                    .frame(width: 256, height: 256)
+                    .clipped()
+                    .border(.gray)
+                    .padding(10)
+                    .onAppear() {
+                        self.setupAnimation()
+                    }
+                
+                
+                Button("Animate") {
+                    if (self.textAnimationTimerRunning) {
+                        self.textAnimationTimer.upstream.connect().cancel()
+                    } else {
+                        self.textAnimationTimer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
+                    }
+                    
+                    self.setupAnimation()
+                    
+                    self.textAnimationTimerRunning.toggle()
+                }.padding(10)
+                
+                Text("Counter \(offsetBounds)")
+                    .onReceive(textAnimationTimer) { _ in
+                        if (self.textAnimationTimerRunning) {
+                            currentOffset -= steps
+                            
+                            if (currentOffset <= -1 * offsetBounds) {
+                                self.textAnimationTimerRunning = false
+                                self.textAnimationTimer.upstream.connect().cancel()
+                                self.setupAnimation()
+                            }
+                        }
+                    }
+                
+                Text("Offset: \(currentOffset)")
+                Text("Offset Bounds: \(offsetBounds)")
+                Text("Steps: \(steps)")
+                Text("Image Width: \(Int(longImage.size.width)); Height: \(Int(longImage.size.height))")
             }
             .tabItem {
                 Label("Timers", systemImage: "timer")
             }.tag(AppPage.timers)
         }
+    }
+    
+    private func setupAnimation() {
+        offsetBounds = Int(longImage.size.width) - (matrixController.programOverview.matrixInformation?.width ?? 64) * 2
+        currentOffset = offsetBounds
+        steps = Int(longImage.size.height) / (matrixController.programOverview.matrixInformation?.height ?? 32)
     }
     
     private func optionallyUpdateTextPreview() async {
