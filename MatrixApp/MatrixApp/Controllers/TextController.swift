@@ -23,6 +23,7 @@ struct ScrollingTextValidationResponse {
 @MainActor
 class TextController: ObservableObject {
     static let validText: String = "Valid"
+    let scaleFactor: Int = 2
     
     @Published var colors: [MatrixColor] = [MatrixColor(id: -1, name: "Temp", red: 0, green: 0, blue: 0, deleted: false)]
     @Published var fonts: [MatrixFont] = [MatrixFont(id: -1, name: "Test", fileLocation: "none", width: -1, height: -1)]
@@ -87,7 +88,12 @@ class TextController: ObservableObject {
         
         var payload: ScrollingTextPayload? = nil
         if (invalidFieldsList.isEmpty) {
-            payload = ScrollingTextPayload(text: text, scrollingDelay: scrollingDelay, iterations: iterations, matrixColorId: color!.id, matrixFontId: font!.id)
+            payload = ScrollingTextPayload(
+                text: text,
+                scrollingDelay: scrollingDelay,
+                iterations: iterations == 0 ? -1 : iterations, // numberPad does not permit negatives
+                matrixColorId: color!.id,
+                matrixFontId: font!.id)
         }
         
         return ScrollingTextValidationResponse(successfullyValidated: invalidFieldsList.isEmpty, invalidFields: invalidFieldsFormatted, payload: payload)
@@ -100,7 +106,7 @@ class TextController: ObservableObject {
             let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
             let payload = validationResponse.payload!
                         
-            guard let image: UIImage = try? await client.GetAsImage(route: "text/plain/render?trimHeader=true&scaleFactor=4", body: payload) else {
+            guard let image: UIImage = try? await client.GetAsImage(route: "text/plain/render?trimHeader=true&scaleFactor=\(scaleFactor)", body: payload) else {
                 return nil
             }
             
@@ -117,7 +123,7 @@ class TextController: ObservableObject {
             let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
             let payload = validationResponse.payload!
             
-            guard let image: UIImage = try? await client.GetAsImage(route: "text/scrolling/render?trimHeader=true&scaleFactor=4", body: payload) else {
+            guard let image: UIImage = try? await client.GetAsImage(route: "text/scrolling/render?trimHeader=true&cropToMatrixSize=false&scaleFactor=\(scaleFactor)", body: payload) else {
                 return nil
             }
             
