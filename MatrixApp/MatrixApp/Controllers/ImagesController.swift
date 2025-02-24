@@ -8,6 +8,10 @@
 import UIKit
 import Foundation
 
+struct ImagePayload: Codable {
+    var base64Image: String
+}
+
 @MainActor
 class ImagesController: ObservableObject {
     @Published var matrixRendering: UIImage = UIImage()
@@ -48,6 +52,17 @@ class ImagesController: ObservableObject {
         }
         
         self.matrixRendering = image
+    }
+    
+    func postUIImage(image: UIImage?) async {
+        if let imageData = image?.pngData() {
+            let imagePayload = ImagePayload(base64Image: imageData.base64EncodedString())
+            
+            let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+            guard let _: MatrixResponse<String> = try? await client.PostRequest(route: "image/base64", body: imagePayload) else {
+                return
+            }
+        }
     }
     
     private static func createEmptyImage() -> UIImage {

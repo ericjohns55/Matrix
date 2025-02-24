@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		307BF8522D6AEC0500725BD5 /* SwiftyCrop in Frameworks */ = {isa = PBXBuildFile; productRef = 307BF8512D6AEC0500725BD5 /* SwiftyCrop */; };
 		309DDD252D49BF160086F71B /* AsyncHTTPClient in Frameworks */ = {isa = PBXBuildFile; productRef = 309DDD242D49BF160086F71B /* AsyncHTTPClient */; };
 /* End PBXBuildFile section */
 
@@ -69,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				307BF8522D6AEC0500725BD5 /* SwiftyCrop in Frameworks */,
 				309DDD252D49BF160086F71B /* AsyncHTTPClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -139,6 +141,7 @@
 			name = MatrixApp;
 			packageProductDependencies = (
 				309DDD242D49BF160086F71B /* AsyncHTTPClient */,
+				307BF8512D6AEC0500725BD5 /* SwiftyCrop */,
 			);
 			productName = MatrixApp;
 			productReference = 309DDCF52D49BAE90086F71B /* Matrix  Controller.app */;
@@ -224,6 +227,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				309DDD232D49BF160086F71B /* XCRemoteSwiftPackageReference "async-http-client" */,
+				307BF8502D6AEC0500725BD5 /* XCRemoteSwiftPackageReference "SwiftyCrop" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 309DDCF62D49BAE90086F71B /* Products */;
@@ -594,6 +598,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		307BF8502D6AEC0500725BD5 /* XCRemoteSwiftPackageReference "SwiftyCrop" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/benedom/SwiftyCrop";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 		309DDD232D49BF160086F71B /* XCRemoteSwiftPackageReference "async-http-client" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/swift-server/async-http-client.git";
@@ -605,6 +617,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		307BF8512D6AEC0500725BD5 /* SwiftyCrop */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 307BF8502D6AEC0500725BD5 /* XCRemoteSwiftPackageReference "SwiftyCrop" */;
+			productName = SwiftyCrop;
+		};
 		309DDD242D49BF160086F71B /* AsyncHTTPClient */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 309DDD232D49BF160086F71B /* XCRemoteSwiftPackageReference "async-http-client" */;

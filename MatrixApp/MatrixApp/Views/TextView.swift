@@ -12,7 +12,6 @@ enum TextType {
 }
 
 struct TextView: View {
-    private let IMAGE_VIEW_SIZE = 256
     private let ROW_SIZE = CGFloat(32)
     private let PADDING = CGFloat(8)
     
@@ -54,7 +53,8 @@ struct TextView: View {
                 Image(uiImage: (renderedPreview ?? imagesController.awaitingContent))
                     .resizable()
                     .scaledToFit()
-                    .frame(width: CGFloat(IMAGE_VIEW_SIZE), height: CGFloat(IMAGE_VIEW_SIZE))
+                    .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE),
+                           height: CGFloat(ContentView.IMAGE_VIEW_SIZE))
                     .border(.gray)
             } else {
                 Image(uiImage: (renderedPreview ?? imagesController.awaitingContent))
@@ -62,7 +62,8 @@ struct TextView: View {
                     .scaledToFill()
                     .clipped()
                     .offset(x: CGFloat(currentOffset))
-                    .frame(width: CGFloat(IMAGE_VIEW_SIZE), height: CGFloat(IMAGE_VIEW_SIZE))
+                    .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE),
+                           height: CGFloat(ContentView.IMAGE_VIEW_SIZE))
                     .clipped()
                     .border(.gray)
                     .onTapGesture { _ in
@@ -80,7 +81,7 @@ struct TextView: View {
                             currentOffset -= pixelsPerFrame
                             
                             if (currentOffset <= -1 * offsetBounds) {
-                                currentOffset = offsetBounds + IMAGE_VIEW_SIZE
+                                currentOffset = offsetBounds + Int(ContentView.IMAGE_VIEW_SIZE)
                             }
                         }
                     }
@@ -220,7 +221,7 @@ struct TextView: View {
             }) {
                 Text("Send to Matrix")
             }
-            .frame(width: CGFloat(IMAGE_VIEW_SIZE), height: ROW_SIZE) // TODO: whole bounds need to be clickable
+            .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE), height: ROW_SIZE) // TODO: whole bounds need to be clickable
             .border(.gray)
             .padding(PADDING)
         }

@@ -12,11 +12,13 @@ enum AppPage {
     case image, text, overview, clockFaces, timers
 }
 
-struct ContentView: View {    
+struct ContentView: View {
+    public static let IMAGE_VIEW_SIZE = CGFloat(256)
+    
     @StateObject var matrixController = MatrixController()
     @StateObject var textController = TextController()
     @StateObject var imagesController = ImagesController()
-    @State private var selectedTab: AppPage = .text
+    @State private var selectedTab: AppPage = .image
     
         
     var body: some View {
@@ -31,7 +33,8 @@ struct ContentView: View {
         
         TabView(selection: $selectedTab) {
             VStack {
-                ImageView(textController: textController)
+                ImageView(imagesController: imagesController,
+                          matrixInformation: matrixController.programOverview.matrixInformation ?? MatrixInformation(brightness: 50, width: 64, height: 32))
             }
             .tabItem {
                 Label("Image", systemImage: "photo")
