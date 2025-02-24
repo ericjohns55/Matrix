@@ -93,3 +93,11 @@ struct ScrollingTextPayload: Codable {
     let matrixColorId: Int
     let matrixFontId: Int
 }
+
+struct SavedImage: Decodable, Identifiable {
+    var id: Int
+    var name: String
+    var fileName: String
+    var base64Rendering: String?
+    var scaledRendering: String?
+}

@@ -9,6 +9,7 @@ import UIKit
 import Foundation
 
 struct ImagePayload: Codable {
+    var imageName: String?
     var base64Image: String
 }
 
@@ -20,6 +21,8 @@ class ImagesController: ObservableObject {
     @Published var couldNotConnect: UIImage
     @Published var failedToLoad: UIImage
     @Published var invalidContent: UIImage
+    
+    @Published var savedImages: [SavedImage] = []
     
     init() {
         let emptyImage = ImagesController.createEmptyImage()
@@ -54,6 +57,28 @@ class ImagesController: ObservableObject {
         self.matrixRendering = image
     }
     
+    func loadSavedImages() async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+        
+        guard let matrixResponse: MatrixResponse<[SavedImage]> = try? await client.GetRequest(route: "image/saved?trimHeader=true") else {
+            self.savedImages = []
+            return
+        }
+        
+        self.savedImages = matrixResponse.data
+    }
+    
+    func setMatrixRenderingById(imageId: Int) async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+        
+        print("ID: \(imageId)")
+            
+        guard let _: MatrixResponse<SavedImage> = try? await client.PostRequest(route: "image/\(imageId)", body: nil) else {
+            print("Failed to post image")
+            return
+            }
+    }
+    
     func postUIImage(image: UIImage?) async {
         if let imageData = image?.pngData() {
             let imagePayload = ImagePayload(base64Image: imageData.base64EncodedString())
@@ -63,6 +88,14 @@ class ImagesController: ObservableObject {
                 return
             }
         }
+    }
+    
+    func imageFromBase64(base64String: String) -> UIImage {
+        if let base64 = Data(base64Encoded: base64String), let uiImage = UIImage(data: base64) {
+            return uiImage
+        }
+        
+        return self.failedToLoad
     }
     
     private static func createEmptyImage() -> UIImage {

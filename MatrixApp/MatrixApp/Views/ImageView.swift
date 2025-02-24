@@ -16,7 +16,7 @@ struct ImageView: View {
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var selectedImage: UIImage? = nil
     @State private var croppedImage: UIImage? = nil
-    
+        
     let matrixInformation: MatrixInformation
     let imagesController: ImagesController
     
@@ -27,7 +27,7 @@ struct ImageView: View {
     
     var body: some View {
         VStack {
-            Image(uiImage: (selectedImage ?? imagesController.awaitingContent))
+            Image(uiImage: (croppedImage ?? selectedImage ?? imagesController.awaitingContent))
                 .resizable()
                 .scaledToFit()
                 .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE),
@@ -43,12 +43,27 @@ struct ImageView: View {
                 Text("Select")
             }
             
-            if let croppedImage {
-                Image(uiImage: croppedImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: ContentView.IMAGE_VIEW_SIZE, height: ContentView.IMAGE_VIEW_SIZE)
+            VStack {
+                List(imagesController.savedImages, id: \.id) { image in
+                    Button(action: {
+                        print("Tapped: \(image.id)")
+                        Task {
+                            await imagesController.setMatrixRenderingById(imageId: image.id)
+                        }
+                    }) {
+                        HStack {
+                            Image(uiImage: imagesController.imageFromBase64(base64String: image.base64Rendering ?? "invalid"))
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 48, height: 48)
+                                .border(.gray)
+                            Text(image.name)
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
             }
+            .padding()
         }
         .padding(.bottom, keyboardResponder.keyboardHeight)
         .animation(.easeOut(duration: 0.2), value: keyboardResponder.keyboardHeight)
@@ -69,10 +84,6 @@ struct ImageView: View {
                 SwiftyCropView(imageToCrop: selectedImage,
                                maskShape: .square) { croppedImage in
                     self.croppedImage = croppedImage?.resize(width: 64, height: 64)
-                    
-                    if let imageData = self.croppedImage?.pngData() {
-                        print(imageData.base64EncodedString())
-                    }
                 }
             }
         }

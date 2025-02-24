@@ -29,6 +29,7 @@ struct ContentView: View {
                 await matrixController.getProgramOverview()
                 await textController.loadAllData()
                 await imagesController.fetchMatrixRendering()
+                await imagesController.loadSavedImages()
             }
         
         TabView(selection: $selectedTab) {
