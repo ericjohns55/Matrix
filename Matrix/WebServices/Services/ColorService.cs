@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Matrix.WebServices.Services;
 
-public class ColorService : IColorService
+public class ColorService
 {
     private readonly MatrixContext _matrixContext;
 

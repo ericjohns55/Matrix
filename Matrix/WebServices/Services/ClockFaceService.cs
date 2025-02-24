@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Matrix.WebServices.Services;
 
-public class ClockFaceService : IClockFaceService
+public class ClockFaceService
 {
     private readonly MatrixContext _matrixContext;
     private readonly int _minutesInDay = 24 * 60;
@@ -66,11 +66,6 @@ public class ClockFaceService : IClockFaceService
         if (clockFace == null)
         {
             throw new MatrixEntityNotFoundException($"Could not find clock face with id {faceId}");
-        }
-
-        if (clockFace.IsTimerFace)
-        {
-            throw new ClockFaceException(WebConstants.ClockFaceIsTimer);
         }
 
         if (render)
@@ -160,12 +155,79 @@ public class ClockFaceService : IClockFaceService
         {
             throw new ArgumentNullException($"{updatedFace} cannot be null");
         }
+
+        var updatedTextLines = new List<TextLine>();
+        var newTextLines = updatedFace.TextLines.Where(textLine => textLine.Id == 0);
+        var textLinesInBothFaces = updatedFace.TextLines
+            .Where(textLine => originalFace.TextLines.Any(newLine => newLine.Id == textLine.Id));
+        var textLinesNotInUpdatedFace = originalFace.TextLines
+            .Where(textLine => updatedFace.TextLines.All(newLine => newLine.Id != textLine.Id));
         
-        await _matrixContext.SaveChangesAsync();
+        foreach (var newTextLine in newTextLines)
+        {
+            _matrixContext.Add(newTextLine);
+            updatedTextLines.Add(newTextLine);
+        };
+        
+        _matrixContext.RemoveRange(textLinesNotInUpdatedFace);
+
+        foreach (var lineToUpdate in textLinesInBothFaces)
+        {
+            var oldLine = await _matrixContext.TextLine
+                .SingleAsync(line => line.Id == lineToUpdate.Id && line.ClockFaceId == faceId);
+            
+            oldLine.Text = lineToUpdate.Text;
+            oldLine.XLocation = lineToUpdate.XLocation;
+            oldLine.YLocation = lineToUpdate.YLocation;
+            oldLine.XPositioning = lineToUpdate.XPositioning;
+            oldLine.YPositioning = lineToUpdate.YPositioning;
+            oldLine.MatrixColorId = lineToUpdate.MatrixColorId;
+            oldLine.MatrixFontId = lineToUpdate.MatrixFontId;
+            oldLine.ClockFaceId = faceId;
+            
+            _matrixContext.TextLine.Update(oldLine);
+
+            updatedTextLines.Add(oldLine);
+        }
+
+        var updatedTimePeriods = new List<TimePeriod>();
+        var newTimePeriods = updatedFace.TimePeriods.Where(timePeriod => timePeriod.Id == 0);
+        var timePeriodsInBothFaces = updatedFace.TimePeriods
+            .Where(timePeriod => originalFace.TimePeriods.Any(newPeriod => newPeriod.Id == timePeriod.Id));
+        var timePeriodsNotInUpdatedFace = originalFace.TimePeriods
+            .Where(timePeriod => updatedFace.TimePeriods.All(newPeriod => newPeriod.Id != timePeriod.Id));
+
+        foreach (var newTimePeriod in newTimePeriods)
+        {
+            _matrixContext.Add(newTimePeriod);
+            updatedTimePeriods.Add(newTimePeriod);
+        }
+        
+        _matrixContext.RemoveRange(timePeriodsNotInUpdatedFace);
+
+        foreach (var periodToUpdate in timePeriodsInBothFaces)
+        {
+            var oldPeriod = await _matrixContext.TimePeriod.SingleAsync(period => period.Id == periodToUpdate.Id);
+            
+            oldPeriod.StartHour = periodToUpdate.StartHour;
+            oldPeriod.StartMinute = periodToUpdate.StartMinute;
+            oldPeriod.StartSecond = periodToUpdate.StartSecond;
+            oldPeriod.EndHour = periodToUpdate.EndHour;
+            oldPeriod.EndMinute = periodToUpdate.EndMinute;
+            oldPeriod.EndSecond = periodToUpdate.EndSecond;
+            oldPeriod.DaysOfWeek = new List<DayOfWeek>();
+            oldPeriod.DaysOfWeek.AddRange(periodToUpdate.DaysOfWeek);
+            oldPeriod.ClockFaceId = faceId;
+            
+            _matrixContext.TimePeriod.Update(oldPeriod);
+            
+            updatedTimePeriods.Add(oldPeriod);
+        }
         
         originalFace.Name = updatedFace.Name;
-        originalFace.TextLines = updatedFace.TextLines;
-        originalFace.TimePeriods = updatedFace.TimePeriods;
+        originalFace.IsTimerFace = updatedFace.IsTimerFace;
+        originalFace.TextLines = updatedTextLines;
+        originalFace.TimePeriods = updatedTimePeriods;
         
         _matrixContext.ClockFace.Update(originalFace);
         await _matrixContext.SaveChangesAsync();

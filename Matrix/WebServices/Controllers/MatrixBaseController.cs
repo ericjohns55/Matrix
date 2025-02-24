@@ -55,28 +55,4 @@ public class MatrixBaseController : Controller
             };
         });
     }
-    
-    protected async Task<MatrixColor> LoadMatrixColorFromId(MatrixContext matrixContext, int id)
-    {
-        var color = await matrixContext.MatrixColor.FirstOrDefaultAsync(color => color.Id == id);
-
-        if (color == null)
-        {
-            throw new MatrixEntityNotFoundException(WebConstants.ColorNotFound);
-        }
-
-        return color;
-    }
-
-    protected async Task<MatrixFont> LoadMatrixFontFromId(MatrixContext matrixContext, int id)
-    {
-        var font = await matrixContext.MatrixFont.FirstOrDefaultAsync(font => font.Id == id);
-
-        if (font == null)
-        {
-            throw new MatrixEntityNotFoundException(WebConstants.FontNotFound);
-        }
-        
-        return font;
-    }
 }

@@ -145,7 +145,7 @@ public static class MatrixRenderer
         }
     }
 
-    private static Image<Rgb24> OptionallyScaleImage(Image<Rgb24> image, int scaleFactor)
+    public static Image<Rgb24> OptionallyScaleImage(Image<Rgb24> image, int scaleFactor)
     {
         if (scaleFactor <= 1)
         {

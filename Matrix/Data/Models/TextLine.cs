@@ -9,18 +9,19 @@ public class TextLine
 {
     public int Id { get; init; }
     
-    [Required] public string Text { get; set; }
+    [Required]
+    public string Text { get; set; }
 
-    public int XLocation { get; init; }
-    public int YLocation { get; init; }
-    public Positioning.XPositioning XPositioning { get; init; }
-    public Positioning.YPositioning YPositioning { get; init; }
+    public int XLocation { get; set; }
+    public int YLocation { get; set; }
+    public Positioning.XPositioning XPositioning { get; set; }
+    public Positioning.YPositioning YPositioning { get; set; }
 
-    public int MatrixColorId { get; init; }
-    public MatrixColor Color { get; init; }
+    public int MatrixColorId { get; set; }
+    public MatrixColor? Color { get; set; }
     
-    public int MatrixFontId { get; init; }
-    public MatrixFont Font { get; init; }
+    public int MatrixFontId { get; set; }
+    public MatrixFont? Font { get; set; }
     
-    public int ClockFaceId { get; init; }
+    public int ClockFaceId { get; set; }
 }

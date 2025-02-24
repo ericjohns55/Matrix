@@ -8,6 +8,7 @@ using Matrix.Data.Utilities;
 using Matrix.Display;
 using Matrix.Utilities;
 using Matrix.WebServices.Authentication;
+using Matrix.WebServices.Clients;
 
 namespace Matrix.WebServices.Controllers;
 
@@ -16,16 +17,11 @@ namespace Matrix.WebServices.Controllers;
 public class MatrixController  : MatrixBaseController
 {
     private readonly ILogger<MatrixController> _logger;
-    private readonly IMatrixService _matrixService;
     private readonly IConfiguration _configuration;
 
-    public MatrixController(
-        ILogger<MatrixController> logger,
-        IMatrixService matrixService,
-        IConfiguration configuration)
+    public MatrixController(ILogger<MatrixController> logger, IConfiguration configuration)
     {
         _logger = logger;
-        _matrixService = matrixService;
         _configuration = configuration;
     }
 
@@ -46,7 +42,22 @@ public class MatrixController  : MatrixBaseController
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, string>))]
     public async Task<IActionResult> UpdateVariables()
     {
-        return Ok(await ExecuteToMatrixResponseAsync(() => _matrixService.UpdateVariables()));
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+        {
+            var weatherUrl = _configuration.GetValue<string>(ConfigConstants.WeatherUrl);
+
+            if (weatherUrl != null)
+            {
+                using (var weatherClient = new WeatherClient(weatherUrl))
+                {
+                    ProgramState.Weather = await weatherClient.GetWeather();
+                    ProgramState.UpdateVariables();
+                    ProgramState.UpdateNextTick = true;
+                }
+            }
+
+            return ProgramState.CurrentVariables;
+        }));
     }
     
     [HttpGet("config")]

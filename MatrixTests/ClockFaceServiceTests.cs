@@ -3,6 +3,7 @@ using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Models.TimeValidation;
 using Matrix.Data.Types;
+using Matrix.Data.Utilities;
 using Matrix.WebServices;
 using Matrix.WebServices.Services;
 
@@ -11,7 +12,7 @@ namespace MatrixTests;
 public class ClockFaceServiceTests : MatrixTestBase
 {
     private MatrixContext _matrixContext;
-    private IClockFaceService _clockFaceService;
+    private ClockFaceService _clockFaceService;
     
     [SetUp]
     public void Setup()
@@ -84,7 +85,7 @@ public class ClockFaceServiceTests : MatrixTestBase
         Assert.NotNull(clockFace);
         Assert.That(clockFace.Name, Is.EqualTo(ActiveFaceName));
         Assert.That(clockFace.Id, Is.EqualTo(ActiveFaceId));
-        Assert.That(clockFace.TextLines.Count, Is.EqualTo(1));
+        Assert.That(clockFace.TextLines.Count, Is.EqualTo(2));
         Assert.That(clockFace.TimePeriods.Count, Is.EqualTo(1));
         Assert.False(clockFace.Deleted);
     }
@@ -115,13 +116,39 @@ public class ClockFaceServiceTests : MatrixTestBase
     }
 
     [Test]
+    public async Task UpdateClockFace_EditedLines()
+    {
+        // Arrange
+        SeedClockFaces(_matrixContext);
+        
+        var clockFace = (await _clockFaceService.GetClockFace(ActiveFaceId)).DeepCopy();
+        foreach (var clockFaceTextLine in clockFace.TextLines)
+        {
+            clockFaceTextLine.Text = "UPDATED";
+        }
+        
+        // Act
+        var updateResult = await _clockFaceService.UpdateClockFace(ActiveFaceId, clockFace);
+        
+        // Assert
+        Assert.NotNull(updateResult);
+        Assert.That(updateResult.Id, Is.EqualTo(ActiveFaceId));
+        Assert.IsNotEmpty(updateResult.TextLines);
+        
+        foreach (var updateResultTextLine in updateResult.TextLines)
+        {
+            Assert.That(updateResultTextLine.Text, Is.EqualTo("UPDATED"));
+        }
+    }
+
+    [Test]
     public async Task UpdateClockFace_NewLines()
     {
         // Arrange
         SeedClockFaces(_matrixContext);
 
         var updatedText = "Changed Text";
-        var clockFace = await _clockFaceService.GetClockFace(ActiveFaceId);
+        var clockFace = (await _clockFaceService.GetClockFace(ActiveFaceId)).DeepCopy();
         clockFace.TextLines = new List<TextLine>()
         {
             new TextLine()
@@ -136,6 +163,7 @@ public class ClockFaceServiceTests : MatrixTestBase
             }
         };
         
+        // Act
         var updateResult = await _clockFaceService.UpdateClockFace(ActiveFaceId, clockFace);
         
         // Assert
@@ -151,7 +179,7 @@ public class ClockFaceServiceTests : MatrixTestBase
         // Arrange
         SeedClockFaces(_matrixContext);
 
-        var clockFace = await _clockFaceService.GetClockFace(ActiveFaceId);
+        var clockFace = (await _clockFaceService.GetClockFace(ActiveFaceId)).DeepCopy();
         clockFace.TimePeriods = new List<TimePeriod>()
         {
             new TimePeriod()
@@ -183,6 +211,100 @@ public class ClockFaceServiceTests : MatrixTestBase
         Assert.That(timePeriod.EndHour, Is.EqualTo(1));
         Assert.That(timePeriod.DaysOfWeek.Count, Is.EqualTo(1));
         Assert.That(timePeriod.DaysOfWeek.First(), Is.EqualTo(DayOfWeek.Monday));
+    }
+
+    [Test]
+    public async Task UpdateClockFace_UpdatedTimePeriods()
+    {
+        // Arrange
+        SeedClockFaces(_matrixContext);
+
+        var clockFace = (await _clockFaceService.GetClockFace(ActiveFaceId)).DeepCopy();
+        foreach (var originalTimePeriod in clockFace.TimePeriods)
+        {
+            originalTimePeriod.StartSecond = 2;
+            originalTimePeriod.StartMinute = 2;
+            originalTimePeriod.StartHour = 2;
+            originalTimePeriod.EndSecond = 2;
+            originalTimePeriod.EndMinute = 2;
+            originalTimePeriod.EndHour = 2;
+            originalTimePeriod.DaysOfWeek = new List<DayOfWeek>() { DayOfWeek.Monday };
+        }
+        
+        // Act
+        var updateResult = await _clockFaceService.UpdateClockFace(ActiveFaceId, clockFace);
+        var timePeriod = updateResult.TimePeriods.First();
+        
+        // Assert
+        Assert.NotNull(updateResult);
+        Assert.NotNull(timePeriod);
+        Assert.That(updateResult.Id, Is.EqualTo(ActiveFaceId));
+        Assert.That(timePeriod.StartSecond, Is.EqualTo(2));
+        Assert.That(timePeriod.StartMinute, Is.EqualTo(2));
+        Assert.That(timePeriod.StartHour, Is.EqualTo(2));
+        Assert.That(timePeriod.EndSecond, Is.EqualTo(2));
+        Assert.That(timePeriod.EndMinute, Is.EqualTo(2));
+        Assert.That(timePeriod.EndHour, Is.EqualTo(2));
+        Assert.That(timePeriod.DaysOfWeek.Count, Is.EqualTo(1));
+        Assert.True(timePeriod.DaysOfWeek.Contains(DayOfWeek.Monday));
+    }
+
+    [Test]
+    public async Task UpdateClockFace_Everything()
+    {
+        // Arrange
+        SeedClockFaces(_matrixContext);
+
+        var clockFace = (await _clockFaceService.GetClockFace(ActiveFaceId)).DeepCopy();
+        
+        var newTextLines = new List<TextLine>();
+        var keptLine = clockFace.TextLines.First();
+        keptLine.Text = "UPDATED";
+        newTextLines.Add(keptLine);
+        
+        newTextLines.Add(new TextLine()
+        {
+            Text = "New Text",
+            Color = _matrixContext.MatrixColor.First(),
+            Font = new MatrixFont()
+            {
+                FileLocation = string.Empty,
+                Name = Guid.NewGuid().ToString()
+            }
+        });
+        
+        var newTimePeriods = new List<TimePeriod>();
+        var keptPeriod = clockFace.TimePeriods.First();
+        keptPeriod.StartSecond = 25;
+        newTimePeriods.Add(keptPeriod);
+        
+        newTimePeriods.Add(new TimePeriod()
+        {
+            DaysOfWeek = new List<DayOfWeek>() { DayOfWeek.Monday },
+            StartHour = 0,
+            StartMinute = 0,
+            EndHour = 12,
+            EndMinute = 0,
+        });
+        
+        clockFace.TextLines = newTextLines;
+        clockFace.TimePeriods = newTimePeriods;
+        clockFace.Name = "UPDATED";
+        clockFace.IsTimerFace = true;
+        
+        // Act
+        var updatedFace = await _clockFaceService.UpdateClockFace(ActiveFaceId, clockFace);
+        
+        // Assert
+        Assert.NotNull(updatedFace);
+        Assert.That(updatedFace.TextLines.Count, Is.EqualTo(2));
+        Assert.True(updatedFace.TextLines.Any(line => line.Text == "UPDATED"));
+        Assert.True(updatedFace.TextLines.Any(line => line.Text == "New Text"));
+        Assert.That(updatedFace.TimePeriods.Count, Is.EqualTo(2));
+        Assert.True(updatedFace.TimePeriods.Any(timePeriod => timePeriod.StartSecond == 25));
+        Assert.True(updatedFace.TimePeriods.Any(timePeriod => timePeriod.EndHour == 12));
+        Assert.True(updatedFace.Name == "UPDATED");
+        Assert.True(updatedFace.IsTimerFace);
     }
 
     [Test]

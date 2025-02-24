@@ -54,6 +54,7 @@ public class ExceptionHandlingMiddleware
             case ClockFaceException:
             case InvalidImageException:
             case ImageFormatException:
+            case MatrixEntityNotValidException:
             case WebException:
                 return HttpStatusCode.BadRequest;
             case IntegrationsException:

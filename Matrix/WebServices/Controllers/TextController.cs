@@ -1,9 +1,7 @@
 using Matrix.Data;
-using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
 using Matrix.Data.Models.Web;
 using Matrix.Data.Types;
-using Matrix.Data.Utilities;
 using Matrix.Display;
 using Matrix.WebServices.Authentication;
 using Matrix.WebServices.Services;
@@ -17,10 +15,12 @@ namespace Matrix.WebServices.Controllers;
 public class TextController : MatrixBaseController
 {
     private readonly MatrixContext _matrixContext;
+    private readonly TextService _textService;
 
-    public TextController(MatrixContext matrixContext)
+    public TextController(MatrixContext matrixContext, TextService textService)
     {
         _matrixContext = matrixContext;
+        _textService = textService;
     }
 
     [HttpGet("fonts")]
@@ -37,24 +37,53 @@ public class TextController : MatrixBaseController
     {
         return Ok(await ExecuteToMatrixResponseAsync(async () =>
         {
-            if (plainTextPayload.Color == null)
-            {
-                plainTextPayload.Color = await LoadMatrixColorFromId(_matrixContext, plainTextPayload.MatrixColorId);
-            }
+            await _textService.LoadPlainTextDependencies(plainTextPayload);
 
-            if (plainTextPayload.Font == null)
-            {
-                plainTextPayload.Font = await LoadMatrixFontFromId(_matrixContext, plainTextPayload.MatrixFontId);
-            }
-            
-            ProgramState.PlainText = new PlainText(plainTextPayload);
-            
-            ProgramState.PreviousState = ProgramState.State;
-            ProgramState.State = MatrixState.Text;
-            ProgramState.UpdateNextTick = true;
-
-            return ProgramState.PlainText;
+            return PostPlainTextState(plainTextPayload);
         }));
+    }
+
+    [HttpGet("plain/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<PlainText>))]
+    public async Task<IActionResult> GetPlainText([FromRoute] int id)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.GetPlainTextById(id)));
+    }
+
+    [HttpPut("plain/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<PlainText>))]
+    public async Task<IActionResult> UpdateText([FromRoute] int id, [FromBody] PlainTextPayload plainTextPayload)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.UpdatePlainText(id, plainTextPayload)));
+    }
+
+    [HttpPost("plain/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<PlainText>))]
+    public async Task<IActionResult> CreateText([FromRoute] int id)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+            PostPlainTextState(await _textService.GetPlainTextById(id))));
+    }
+
+    [HttpDelete("plain/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<int>))]
+    public async Task<IActionResult> DeletePlainText([FromRoute] int id)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.DeletePlainText(id)));
+    }
+
+    [HttpPost("plain/save")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<PlainTextPayload>))]
+    public async Task<IActionResult> SavePlainText([FromBody] PlainTextPayload plainTextPayload)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.SavePlainText(plainTextPayload)));
+    }
+
+    [HttpGet("plain")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<List<PlainTextPayload>>))]
+    public async Task<IActionResult> GetAllSavedPlainText()
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.GetSavedPlainText()));
     }
 
     [HttpPost("plain/render")]
@@ -63,15 +92,7 @@ public class TextController : MatrixBaseController
     {
         return Ok(await ExecuteToMatrixResponseAsync(async () =>
         {
-            if (plainTextPayload.Color == null)
-            {
-                plainTextPayload.Color = await LoadMatrixColorFromId(_matrixContext, plainTextPayload.MatrixColorId);
-            }
-
-            if (plainTextPayload.Font == null)
-            {
-                plainTextPayload.Font = await LoadMatrixFontFromId(_matrixContext, plainTextPayload.MatrixFontId);
-            }
+            await _textService.LoadPlainTextDependencies(plainTextPayload);
             
             var plainText = new PlainText(plainTextPayload);
             
@@ -85,24 +106,53 @@ public class TextController : MatrixBaseController
     {
         return Ok(await ExecuteToMatrixResponseAsync(async () =>
         {
-            if (scrollingTextPayload.Color == null)
-            {
-                scrollingTextPayload.Color = await LoadMatrixColorFromId(_matrixContext, scrollingTextPayload.MatrixColorId);
-            }
+            await _textService.LoadScrollingTextDependencies(scrollingTextPayload);
 
-            if (scrollingTextPayload.Font == null)
-            {
-                scrollingTextPayload.Font = await LoadMatrixFontFromId(_matrixContext, scrollingTextPayload.MatrixFontId);
-            }
-            
-            ProgramState.ScrollingText = new ScrollingText(scrollingTextPayload);
-
-            ProgramState.PreviousState = ProgramState.State;
-            ProgramState.State = MatrixState.ScrollingText;
-            ProgramState.UpdateNextTick = true;
-
-            return ProgramState.ScrollingText;
+            return PostScrollingTextState(scrollingTextPayload);
         }));
+    }
+
+    [HttpGet("scrolling/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ScrollingTextPayload>))]
+    public async Task<IActionResult> GetScrollingText([FromRoute] int id)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.GetScrollingTextById(id)));
+    }
+
+    [HttpPut("scrolling/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ScrollingTextPayload>))]
+    public async Task<IActionResult> UpdateScrollingText([FromRoute] int id, [FromBody] ScrollingTextPayload scrollingTextPayload)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.UpdateScrollingText(id, scrollingTextPayload)));
+    }
+    
+    [HttpPost("scrolling/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ScrollingText>))]
+    public async Task<IActionResult> CreateScrollingText([FromRoute] int id)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(async () =>
+            PostScrollingTextState(await _textService.GetScrollingTextById(id))));
+    }
+
+    [HttpDelete("scrolling/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<int>))]
+    public async Task<IActionResult> DeleteScrollingText([FromRoute] int id)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.DeleteScrollingText(id)));
+    }
+
+    [HttpPost("scrolling/save")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<List<ScrollingTextPayload>>))]
+    public async Task<IActionResult> SaveScrollingText([FromBody] ScrollingTextPayload scrollingTextPayload)
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.SaveScrollingText(scrollingTextPayload)));
+    }
+
+    [HttpGet("scrolling")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<List<ScrollingTextPayload>>))]
+    public async Task<IActionResult> GetAllScrollingText()
+    {
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.GetSavedScrollingText()));
     }
     
     [HttpPost("scrolling/render")]
@@ -111,15 +161,7 @@ public class TextController : MatrixBaseController
     {
         return Ok(await ExecuteToMatrixResponseAsync(async() =>
         {
-            if (scrollingTextPayload.Color == null)
-            {
-                scrollingTextPayload.Color = await LoadMatrixColorFromId(_matrixContext, scrollingTextPayload.MatrixColorId);
-            }
-
-            if (scrollingTextPayload.Font == null)
-            {
-                scrollingTextPayload.Font = await LoadMatrixFontFromId(_matrixContext, scrollingTextPayload.MatrixFontId);
-            }
+            await _textService.LoadScrollingTextDependencies(scrollingTextPayload);
             
             var scrollingText = new ScrollingText(scrollingTextPayload);
             
@@ -151,5 +193,27 @@ public class TextController : MatrixBaseController
             
             return ProgramState.State;
         }));
+    }
+    
+    private PlainText PostPlainTextState(PlainTextPayload plainTextPayload)
+    {
+        ProgramState.PlainText = new PlainText(plainTextPayload);
+            
+        ProgramState.PreviousState = ProgramState.State;
+        ProgramState.State = MatrixState.Text;
+        ProgramState.UpdateNextTick = true;
+        
+        return ProgramState.PlainText;
+    }
+
+    private ScrollingText PostScrollingTextState(ScrollingTextPayload scrollingTextPayload)
+    {
+        ProgramState.ScrollingText = new ScrollingText(scrollingTextPayload);
+
+        ProgramState.PreviousState = ProgramState.State;
+        ProgramState.State = MatrixState.ScrollingText;
+        ProgramState.UpdateNextTick = true;
+
+        return ProgramState.ScrollingText;
     }
 }

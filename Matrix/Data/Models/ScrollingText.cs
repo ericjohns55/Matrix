@@ -7,18 +7,18 @@ namespace Matrix.Data.Models;
 
 public class ScrollingText
 {
-    private string Text { get; }
-    private MatrixColor Color { get; }
-    private MatrixFont Font { get; }
+    public string Text { get; }
+    public MatrixColor Color { get; }
+    public MatrixFont Font { get; }
     public int ScrollingDelay { get; }
-    private int Iterations { get; }
+    public int Iterations { get; }
     
-    private string ParsedText { get; set; }
+    public string ParsedText { get; set; }
     private int YPosition { get; }
     private int MaxPosition { get; set; }
     
-    private int CurrentPosition { get; set; }
-    private int IterationsLeft { get; set; }
+    public int CurrentPosition { get; set; }
+    public int IterationsLeft { get; set; }
 
     private RGBLedFont ParsedFont { get; init; }
     private Color ParsedColor { get; init; }

@@ -11,9 +11,9 @@ namespace Matrix.WebServices.Controllers;
 public class ColorController : MatrixBaseController
 {
     private readonly ILogger<ColorController> _logger;
-    private readonly IColorService _colorService;
+    private readonly ColorService _colorService;
 
-    public ColorController(ILogger<ColorController> logger, IColorService colorService)
+    public ColorController(ILogger<ColorController> logger, ColorService colorService)
     {
         _logger = logger;
         _colorService = colorService;

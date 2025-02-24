@@ -9,7 +9,7 @@ namespace MatrixTests;
 public class ColorServiceTests : MatrixTestBase
 {
     private MatrixContext _matrixContext;
-    private IColorService _colorService;
+    private ColorService _colorService;
     
     [SetUp]
     public void Setup()

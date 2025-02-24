@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Matrix.Data.Models;
@@ -21,16 +20,16 @@ public class TimePeriod
 
     public ClockFace ClockFace { get; init; }
 
-    public int ClockFaceId { get; init; }
+    public int ClockFaceId { get; set; }
 
-    public int StartHour { get; init; }
-    public int EndHour { get; init; }
+    public int StartHour { get; set; }
+    public int EndHour { get; set; }
     
-    public int StartMinute { get; init; }
-    public int EndMinute { get; init; }
+    public int StartMinute { get; set; }
+    public int EndMinute { get; set; }
     
-    public int StartSecond { get; init; }
-    public int EndSecond { get; init; }
+    public int StartSecond { get; set; }
+    public int EndSecond { get; set; }
     
-    public List<DayOfWeek> DaysOfWeek { get; init; }
+    public List<DayOfWeek> DaysOfWeek { get; set; }
 }

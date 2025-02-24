@@ -8,7 +8,6 @@ public class ApiKeyHelper
     {
         string dataFolderPath = Path.Combine(Environment.CurrentDirectory, "Data");
         string apiKeyPath = Path.Combine(dataFolderPath, "api_key");
-        string apiKey;
         
         if (!File.Exists(apiKeyPath))
         {

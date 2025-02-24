@@ -16,7 +16,7 @@ public class PlainText
         public int LineNumber { get; init; }
     }
     
-    private string Text { get; init; }
+    public string Text { get; init; }
     public string ParsedText { get; internal set; }
     public bool SplitByWord { get; init; }
     public TextAlignment TextAlignment { get; init; }

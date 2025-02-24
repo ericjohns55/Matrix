@@ -2,6 +2,8 @@ namespace Matrix.Data.Utilities;
 
 public class ConfigConstants
 {
+    public static readonly string SavedImagesFolder = "saved_images";
+    
     public static readonly string ServerUrl = "ServerUrl";
     public static readonly string DatabasePath = "DatabasePath";
 

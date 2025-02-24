@@ -17,9 +17,9 @@ namespace Matrix.WebServices.Controllers;
 public class TimerController : MatrixBaseController
 {
     private readonly ILogger<TimerController> _logger;
-    private readonly IClockFaceService _clockFaceService;
+    private readonly ClockFaceService _clockFaceService;
 
-    public TimerController(ILogger<TimerController> logger, IClockFaceService clockFaceService)
+    public TimerController(ILogger<TimerController> logger, ClockFaceService clockFaceService)
     {
         _logger = logger;
         _clockFaceService = clockFaceService;

@@ -10,7 +10,8 @@ public static class MatrixServer
 {
     public static async Task<WebApplication> CreateWebServer(string[] args, IConfigurationRoot configuration, string? fontsPath = null)
     {
-        string databasePath = Path.Combine(Environment.CurrentDirectory, "Data", "matrix.db");
+        string dataFolderPath = Path.Combine(Environment.CurrentDirectory, "Data");
+        string databasePath = Path.Combine(dataFolderPath, "matrix.db");
         if (!string.IsNullOrWhiteSpace(configuration[ConfigConstants.DatabasePath]))
         {
             databasePath = configuration[ConfigConstants.DatabasePath]!;
@@ -33,9 +34,10 @@ public static class MatrixServer
 
         services.AddScoped<ApiKeyAuthFilter>();
 
-        services.AddScoped<IMatrixService, MatrixService>();
-        services.AddScoped<IColorService, ColorService>();
-        services.AddScoped<IClockFaceService, ClockFaceService>();
+        services.AddScoped<ColorService>();
+        services.AddScoped<ClockFaceService>();
+        services.AddScoped<TextService>();
+        services.AddScoped<ImageService>();
         
         services.AddSingleton<IConfiguration>(configuration);
         
@@ -59,13 +61,13 @@ public static class MatrixServer
             MatrixSeeder? seeder = null;
             if (configuration.GetValue<bool>(ConfigConstants.RunSeedOnStart))
             {
-                seeder = new MatrixSeeder(context);
+                seeder = new MatrixSeeder(context, dataFolderPath);
                 await seeder.Seed(configuration.GetValue<bool>(ConfigConstants.SeedDrop), fontsPath);
             }
 
             if (seeder == null && args.Contains("--rebuild-fonts")) // SeedFonts is called within the seeder already if it was already ran
             {
-                seeder = new MatrixSeeder(context);
+                seeder = new MatrixSeeder(context, dataFolderPath);
                 await seeder.SeedFonts(fontsPath);
             }
         }
@@ -83,34 +85,5 @@ public static class MatrixServer
             pattern: "{controller=Home}/{action=Index}/{id?}");
         
         return app;
-    }
-    
-    private static async Task<string> LoadOrGenerateApiKey(string apiKeyPath)
-    {
-        string apiKey;
-        
-        if (!File.Exists(apiKeyPath))
-        {
-            using (var newFile = File.Create(apiKeyPath))
-            {
-                using (var streamWriter = new StreamWriter(newFile))
-                {
-                    apiKey = Guid.NewGuid().ToString().Replace("-", "");
-                    await streamWriter.WriteAsync(apiKey);
-                }
-            }
-        }
-        else
-        {
-            using (var keyFile = File.OpenRead(apiKeyPath))
-            {
-                using (var streamReader = new StreamReader(keyFile))
-                {
-                    apiKey = await streamReader.ReadToEndAsync();
-                }
-            }
-        }
-        
-        return apiKey;
     }
 }

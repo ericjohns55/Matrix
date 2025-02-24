@@ -16,6 +16,10 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="System.Device.Gpio" Version="3.2.0" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Data\saved_images\" />
+    </ItemGroup>
     
 <!--    <ItemGroup>-->
 <!--        <ProjectReference Include="..\..\..\RPiRgbLEDMatrix.csproj" />-->
