@@ -4,6 +4,7 @@ using Matrix.Data.Types;
 using Matrix.Data.Utilities;
 using Matrix.WebServices;
 using Matrix.WebServices.Services;
+using Microsoft.Extensions.Logging;
 
 namespace MatrixTests;
 
@@ -16,7 +17,8 @@ public class TextServiceTests : MatrixTestBase
     public void Setup()
     {
         _matrixContext = CreateMatrixContext();
-        _textService = new TextService(_matrixContext);
+        _textService = new TextService(_matrixContext,
+            new ImageService(_matrixContext, new Logger<ImageService>(new LoggerFactory())));
     }
 
     [TearDown]

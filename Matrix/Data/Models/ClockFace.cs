@@ -12,6 +12,9 @@ public class ClockFace
     public bool IsTimerFace { get; set; }
     public bool Deleted { get; set; }
     
+    public int? BackgroundImageId { get; set; }
+    public SavedImage? BackgroundImage { get; set; }
+    
     [NotMapped]
     public string? Base64Rendering { get; set; } = null;
 

@@ -1,10 +1,14 @@
+using System.ComponentModel;
 using System.Text;
-using Matrix.Data.Models.Web;
+using System.Text.Json.Serialization;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
 using Matrix.Display;
 using Matrix.Utilities;
 using RPiRgbLEDMatrix;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using Color = RPiRgbLEDMatrix.Color;
 
 namespace Matrix.Data.Models;
 
@@ -20,10 +24,15 @@ public class PlainText
     public string ParsedText { get; internal set; }
     public bool SplitByWord { get; init; }
     public TextAlignment TextAlignment { get; init; }
+    public VerticalPositioning VerticalPositioning { get; init; }
     public MatrixColor Color { get; init; }
     public MatrixFont Font { get; init; }
+    public SavedImage? Background { get; init; }
     private int MaxLineCount => MatrixUpdater.MatrixHeight / Font.Height;
     private int MaxCharactersPerLine => MatrixUpdater.MatrixWidth / Font.Width;
+
+    [JsonIgnore]
+    public Image<Rgb24>? BackgroundImage { get; init; }
 
     public bool ShouldUpdateSecondly => Text.Contains(VariableConstants.SecondVariable) ||
                                         Text.Contains(VariableConstants.TimerSecondVariable) ||
@@ -33,9 +42,12 @@ public class PlainText
     {
         Text = payload.Text;
         TextAlignment = payload.TextAlignment;
+        VerticalPositioning = payload.VerticalPositioning;
         SplitByWord = payload.SplitByWord;
         Font = payload.Font!;
         Color = payload.Color!;
+        BackgroundImage = payload.BackgroundImage?.Image;
+        Background = payload.BackgroundImage;
     }
 
     public List<ParsedTextLine> ParseIntoTextLines()
@@ -89,13 +101,18 @@ public class PlainText
 
     public Func<int, int> GenerateYPositionCalculationFunction(int lineCount)
     {
-        if (MatrixUpdater.MatrixHeight - Font.Height * lineCount < lineCount)
+        switch (VerticalPositioning)
         {
-            return (lineNumber) => Font.Height * lineNumber;
+            case VerticalPositioning.Bottom:
+                return (lineNumber) => MatrixUpdater.MatrixHeight - (lineCount * Font.Height) + (lineNumber * Font.Height);
+            case VerticalPositioning.Center:
+                var startPosition = (MatrixUpdater.MatrixHeight - (lineCount * Font.Height)) / 2;
+                return (lineNumber) => startPosition + (lineNumber * Font.Height);
+            case VerticalPositioning.Top:
+                return (lineNumber) => (lineNumber * Font.Height);
         }
         
-        var buffer = (MatrixUpdater.MatrixHeight - lineCount * Font.Height) / (lineCount + 1);
-        return (lineNumber) => (lineNumber - 1) * buffer + lineNumber * Font.Height + buffer;
+        throw new InvalidEnumArgumentException(nameof(VerticalPositioning), (int) VerticalPositioning, typeof(VerticalPositioning));
     }
 
     private List<Line> ParseTextIntoLines()

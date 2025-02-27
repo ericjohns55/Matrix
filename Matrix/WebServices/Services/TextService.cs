@@ -8,10 +8,12 @@ namespace Matrix.WebServices.Services;
 public class TextService
 {
     private readonly MatrixContext _matrixContext;
+    private readonly ImageService _imageService;
 
-    public TextService(MatrixContext matrixContext)
+    public TextService(MatrixContext matrixContext, ImageService imageService)
     {
         _matrixContext = matrixContext;
+        _imageService = imageService;
     }
 
     public async Task LoadPlainTextDependencies(PlainTextPayload plainTextPayload)
@@ -25,6 +27,21 @@ public class TextService
         {
             plainTextPayload.Font = await LoadMatrixFontFromId(plainTextPayload.MatrixFontId);
         }
+
+        if (plainTextPayload.Base64BackgroundImage != null)
+        {
+            plainTextPayload.BackgroundImage = new SavedImage()
+            {
+                Image = _imageService.GetImageFromBase64(plainTextPayload.Base64BackgroundImage)
+            };
+        }
+
+        if (plainTextPayload.Base64BackgroundImage == null 
+            && plainTextPayload.BackgroundImageId != null 
+            && plainTextPayload.BackgroundImage == null)
+        {
+            plainTextPayload.BackgroundImage = await _imageService.GetImageById(plainTextPayload.BackgroundImageId.Value, true);
+        }
         
         if (plainTextPayload.Color == null || plainTextPayload.Font == null)
         {
@@ -34,18 +51,31 @@ public class TextService
 
     public async Task<List<PlainTextPayload>> GetSavedPlainText()
     {
-        return await _matrixContext.SavedPlainText
+        var savedPlainTexts = await _matrixContext.SavedPlainText
             .Include(text => text.Color)
             .Include(text => text.Font)
+            .Include(text => text.BackgroundImage)
             .OrderBy(text => text.Text)
             .ToListAsync();
+
+        foreach (var plainTextPayload in savedPlainTexts)
+        {
+            if (plainTextPayload.BackgroundImage != null && plainTextPayload.BackgroundImageId != null)
+            {
+                var image = await _imageService.GetImageById(plainTextPayload.BackgroundImageId.Value, true);
+                plainTextPayload.BackgroundImage.Base64Rendering = await _imageService.GetBase64OfImageById(image.Id);
+            }
+        }
+
+        return savedPlainTexts;
     }
     
-    public async Task<PlainTextPayload> GetPlainTextById(int plainTextId)
+    public async Task<PlainTextPayload> GetPlainTextById(int plainTextId, bool renderImage = false)
     {
         var plainTextPayload = await _matrixContext.SavedPlainText.Where(text => text.Id == plainTextId)
             .Include(text => text.Color)
             .Include(text => text.Font)
+            .Include(text => text.BackgroundImage)
             .SingleOrDefaultAsync();
 
         if (plainTextPayload == null)
@@ -56,6 +86,11 @@ public class TextService
         if (plainTextPayload.Color == null || plainTextPayload.Font == null)
         {
             throw new MatrixEntityNotValidException(WebConstants.PlainTextNotValid);
+        }
+
+        if (renderImage && plainTextPayload.BackgroundImageId != null)
+        {
+            plainTextPayload.BackgroundImage = await _imageService.GetImageById(plainTextPayload.BackgroundImageId.Value, true);
         }
         
         return plainTextPayload;
@@ -119,6 +154,15 @@ public class TextService
             plainText.MatrixFontId = payload.MatrixFontId;
         }
 
+        if (payload.BackgroundImageId == 0 && payload.BackgroundImage != null)
+        {
+            _matrixContext.Add(payload.BackgroundImage);
+        }
+        else
+        {
+            plainText.BackgroundImageId = payload.BackgroundImageId;
+        }
+
         _matrixContext.SavedPlainText.Update(plainText);
         await _matrixContext.SaveChangesAsync();
         
@@ -136,6 +180,21 @@ public class TextService
         {
             scrollingTextPayload.Font = await LoadMatrixFontFromId(scrollingTextPayload.MatrixFontId);
         }
+
+        if (scrollingTextPayload.Base64BackgroundImage != null)
+        {
+            scrollingTextPayload.BackgroundImage = new SavedImage()
+            {
+                Image = _imageService.GetImageFromBase64(scrollingTextPayload.Base64BackgroundImage)
+            };
+        }
+
+        if (scrollingTextPayload.BackgroundImageId != null 
+            && scrollingTextPayload.BackgroundImage == null
+            && scrollingTextPayload.Base64BackgroundImage == null)
+        {
+            scrollingTextPayload.BackgroundImage = await _imageService.GetImageById(scrollingTextPayload.BackgroundImageId.Value, true);
+        }
         
         if (scrollingTextPayload.Color == null || scrollingTextPayload.Font == null)
         {
@@ -145,18 +204,31 @@ public class TextService
     
     public async Task<List<ScrollingTextPayload>> GetSavedScrollingText()
     {
-        return await _matrixContext.SavedScrollingText
+        var savedScrollingTexts = await _matrixContext.SavedScrollingText
             .Include(text => text.Color)
             .Include(text => text.Font)
+            .Include(text => text.BackgroundImage)
             .OrderBy(text => text.Text)
             .ToListAsync();
+        
+        foreach (var scrollingTextPayload in savedScrollingTexts)
+        {
+            if (scrollingTextPayload.BackgroundImage != null && scrollingTextPayload.BackgroundImageId != null)
+            {
+                var image = await _imageService.GetImageById(scrollingTextPayload.BackgroundImageId.Value, true);
+                scrollingTextPayload.BackgroundImage.Base64Rendering = await _imageService.GetBase64OfImageById(image.Id);
+            }
+        }
+
+        return savedScrollingTexts;
     }
     
-    public async Task<ScrollingTextPayload> GetScrollingTextById(int scrollingTextId)
+    public async Task<ScrollingTextPayload> GetScrollingTextById(int scrollingTextId, bool renderImage = false)
     {
         var scrollingTextPayload = await _matrixContext.SavedScrollingText.Where(text => text.Id == scrollingTextId)
             .Include(text => text.Color)
             .Include(text => text.Font)
+            .Include(text => text.BackgroundImage)
             .SingleOrDefaultAsync();
 
         if (scrollingTextPayload == null)
@@ -167,6 +239,11 @@ public class TextService
         if (scrollingTextPayload.Color == null || scrollingTextPayload.Font == null)
         {
             throw new MatrixEntityNotValidException(WebConstants.ScrollingTextNotValid);
+        }
+
+        if (renderImage && scrollingTextPayload.BackgroundImageId != null)
+        {
+            scrollingTextPayload.BackgroundImage = await _imageService.GetImageById(scrollingTextPayload.BackgroundImageId.Value, true);
         }
         
         return scrollingTextPayload;
@@ -227,6 +304,15 @@ public class TextService
         else
         {
             scrollingText.MatrixFontId = payload.MatrixFontId;
+        }
+
+        if (payload.BackgroundImageId == 0 && payload.BackgroundImage != null)
+        {
+            _matrixContext.Add(payload.BackgroundImage);
+        }
+        else
+        {
+            scrollingText.BackgroundImageId = payload.BackgroundImageId;
         }
         
         _matrixContext.SavedScrollingText.Update(scrollingText);

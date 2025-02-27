@@ -32,6 +32,7 @@ public class ClockFaceService
                 .Include(face => face.TimePeriods)
                 .Include(face => face.TextLines).ThenInclude(line => line.Color)
                 .Include(face => face.TextLines).ThenInclude(line => line.Font)
+                .Include(face => face.BackgroundImage)
                 .ToListAsync();
         }
         
@@ -41,6 +42,7 @@ public class ClockFaceService
             .Include(face => face.TimePeriods)
             .Include(face => face.TextLines).ThenInclude(line => line.Color)
             .Include(face => face.TextLines).ThenInclude(line => line.Font)
+            .Include(face => face.BackgroundImage)
             .ToListAsync();
 
         if (render)
@@ -61,6 +63,7 @@ public class ClockFaceService
             .Include(face => face.TimePeriods)
             .Include(face => face.TextLines).ThenInclude(line => line.Color)
             .Include(face => face.TextLines).ThenInclude(line => line.Font)
+            .Include(face => face.BackgroundImage)
             .FirstOrDefaultAsync();
 
         if (clockFace == null)
@@ -82,6 +85,7 @@ public class ClockFaceService
         var timerFace = await _matrixContext.ClockFace.Where(face => face.Id == id)
             .Include(face => face.TextLines).ThenInclude(line => line.Color)
             .Include(face => face.TextLines).ThenInclude(line => line.Font)
+            .Include(face => face.BackgroundImage)
             .FirstOrDefaultAsync();
 
         if (timerFace == null)
@@ -228,6 +232,7 @@ public class ClockFaceService
         originalFace.IsTimerFace = updatedFace.IsTimerFace;
         originalFace.TextLines = updatedTextLines;
         originalFace.TimePeriods = updatedTimePeriods;
+        originalFace.BackgroundImageId = updatedFace.BackgroundImageId;
         
         _matrixContext.ClockFace.Update(originalFace);
         await _matrixContext.SaveChangesAsync();

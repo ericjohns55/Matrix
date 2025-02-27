@@ -69,7 +69,7 @@ public class ProgramState
             return true;
         }
 
-        if (State == MatrixState.Text && PlainText != null & (PlainText!.ShouldUpdateSecondly || now.Second == 0))
+        if (State == MatrixState.Text && PlainText != null && (PlainText!.ShouldUpdateSecondly || now.Second == 0))
         {
             return true;
         }

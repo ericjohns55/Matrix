@@ -67,6 +67,11 @@ public class ImageService
         return savedImage;
     }
 
+    public async Task<string> GetBase64OfImageById(int imageId, bool trimHeader = false)
+    {
+        return MatrixRenderer.ImageToBase64((await GetImageById(imageId, true)).Image, trimHeader);
+    }
+
     public async Task<SavedImage> GetImageById(int imageId, bool includeRendering = false, string? filePath = null)
     {
         var image = await _matrixContext.SavedImage.FirstOrDefaultAsync(image => image.Id == imageId);
@@ -127,10 +132,15 @@ public class ImageService
         return image;
     }
 
+    public Image<Rgb24> GetImageFromBase64(string base64Image)
+    {
+        var imageBytes = Convert.FromBase64String(base64Image);
+        return Image.Load<Rgb24>(imageBytes);
+    }
+
     private async Task<string> SaveToFile(ImagePayload imagePayload, string? filePath = null)
     {
-        var imageBytes = Convert.FromBase64String(imagePayload.Base64Image!);
-        var image = Image.Load<Rgb24>(imageBytes);
+        var image = GetImageFromBase64(imagePayload.Base64Image!);
         
         var fileName = $"{Guid.NewGuid()}.png";
         await image.SaveAsPngAsync(Path.Combine(filePath ?? _imagesFolderPath, fileName));

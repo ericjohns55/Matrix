@@ -67,27 +67,29 @@ public class MatrixController  : MatrixBaseController
         return Ok(ExecuteToMatrixResponse(() => ConfigUtility.GetConfig(_configuration)));
     }
 
+    private ProgramOverview GenerateProgramOverview() => new ProgramOverview()
+    {
+        MatrixState = ProgramState.State,
+        MatrixInformation = new MatrixInformation()
+        {
+            Width = MatrixUpdater.MatrixWidth,
+            Height = MatrixUpdater.MatrixHeight,
+            Brightness = MatrixUpdater.MatrixBrightness
+        },
+        UpdateInterval = MatrixMain.MatrixUpdater.GetUpdateInterval(),
+        CurrentVariables = ProgramState.CurrentVariables,
+        Timer = ProgramState.Timer,
+        PlainText = ProgramState.PlainText,
+        ScrollingText = ProgramState.ScrollingText,
+        CurrentClockFace = MatrixMain.MatrixUpdater.CurrentClockFace,
+        OverridenClockFace = ProgramState.OverrideClockFace ? MatrixUpdater.OverridenClockFace : null
+    };
+
     [HttpGet("overview")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ProgramOverview>))]
     public IActionResult GetOverview()
     {
-        return Ok(ExecuteToMatrixResponse(() => new ProgramOverview()
-        {
-            MatrixState = ProgramState.State,
-            MatrixInformation = new MatrixInformation()
-            {
-                Width = MatrixUpdater.MatrixWidth,
-                Height = MatrixUpdater.MatrixHeight,
-                Brightness = MatrixUpdater.MatrixBrightness
-            },
-            UpdateInterval = MatrixMain.MatrixUpdater.GetUpdateInterval(),
-            CurrentVariables = ProgramState.CurrentVariables,
-            Timer = ProgramState.Timer,
-            PlainText = ProgramState.PlainText,
-            ScrollingText = ProgramState.ScrollingText,
-            CurrentClockFace = MatrixMain.MatrixUpdater.CurrentClockFace,
-            OverridenClockFace = ProgramState.OverrideClockFace ? MatrixUpdater.OverridenClockFace : null
-        }));
+        return Ok(ExecuteToMatrixResponse(() => GenerateProgramOverview()));
     }
 
     [HttpPost("update")]
@@ -102,7 +104,7 @@ public class MatrixController  : MatrixBaseController
     }
 
     [HttpPost("restore")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<bool>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ProgramOverview>))]
     public IActionResult RestoreState()
     {
         return Ok(ExecuteToMatrixResponse(() =>
@@ -119,7 +121,7 @@ public class MatrixController  : MatrixBaseController
             MatrixUpdater.OverridenClockFace = null;
             
             ProgramState.UpdateNextTick = true;
-            return ProgramState.UpdateNextTick;
+            return GenerateProgramOverview();
         }));
     }
     

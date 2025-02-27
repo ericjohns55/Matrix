@@ -62,7 +62,7 @@ public class TextController : MatrixBaseController
     public async Task<IActionResult> CreateText([FromRoute] int id)
     {
         return Ok(await ExecuteToMatrixResponseAsync(async () =>
-            PostPlainTextState(await _textService.GetPlainTextById(id))));
+            PostPlainTextState(await _textService.GetPlainTextById(id, true))));
     }
 
     [HttpDelete("plain/{id}")]
@@ -108,7 +108,8 @@ public class TextController : MatrixBaseController
         {
             await _textService.LoadScrollingTextDependencies(scrollingTextPayload);
 
-            return PostScrollingTextState(scrollingTextPayload);
+            var temp = PostScrollingTextState(scrollingTextPayload);
+            return temp;
         }));
     }
 
@@ -131,7 +132,7 @@ public class TextController : MatrixBaseController
     public async Task<IActionResult> CreateScrollingText([FromRoute] int id)
     {
         return Ok(await ExecuteToMatrixResponseAsync(async () =>
-            PostScrollingTextState(await _textService.GetScrollingTextById(id))));
+            PostScrollingTextState(await _textService.GetScrollingTextById(id, true))));
     }
 
     [HttpDelete("scrolling/{id}")]

@@ -2,10 +2,7 @@ using System.Text.RegularExpressions;
 using Matrix.Data.Models;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
-using Matrix.Display;
 using Matrix.WebServices.Services;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Matrix.WebServices;
 
@@ -382,34 +379,6 @@ public class MatrixSeeder
         
         await _matrixContext.AddRangeAsync(dayFace, duskFace, nightFace, timerFace);
         await _matrixContext.SaveChangesAsync();
-
-        _logger.LogInformation("Seeding sample scrolling text...");
-
-        var exampleScrollingText = new ScrollingTextPayload()
-        {
-            Text = "Example scrolling text",
-            Iterations = 3,
-            ScrollingDelay = 10,
-            MatrixColorId = red.Id,
-            MatrixFontId = fontLarge.Id
-        };
-
-        await _matrixContext.AddAsync(exampleScrollingText);
-        await _matrixContext.SaveChangesAsync();
-        
-        _logger.LogInformation("Seeding sample plain text...");
-
-        var examplePlainText = new PlainTextPayload()
-        {
-            Text = "Example plain text",
-            TextAlignment = TextAlignment.Center,
-            SplitByWord = false,
-            MatrixColorId = purple.Id,
-            MatrixFontId = fontMedium.Id
-        };
-        
-        await _matrixContext.AddAsync(examplePlainText);
-        await _matrixContext.SaveChangesAsync();
         
         _logger.LogInformation("Seeding example image...");
 
@@ -431,6 +400,64 @@ public class MatrixSeeder
             ImageName = "Example Image",
             Base64Image = ExampleImageBase64
         });
+        
+        await _matrixContext.SaveChangesAsync();
+
+        var savedImageId = _matrixContext.SavedImage.First().Id;
+
+        _logger.LogInformation("Seeding sample scrolling text...");
+
+        var exampleScrollingText = new ScrollingTextPayload()
+        {
+            Text = "Example scrolling text",
+            VerticalPositioning = VerticalPositioning.Center,
+            Iterations = 3,
+            ScrollingDelay = 10,
+            MatrixColorId = red.Id,
+            MatrixFontId = fontLarge.Id
+        };
+
+        var scrollingTextWithImage = new ScrollingTextPayload()
+        {
+            Text = "Example scrolling text with image",
+            VerticalPositioning = VerticalPositioning.Bottom,
+            Iterations = 3,
+            ScrollingDelay = 10,
+            MatrixColorId = white.Id,
+            MatrixFontId = fontSmall.Id,
+            BackgroundImageId = savedImageId
+        };
+
+        await _matrixContext.AddAsync(exampleScrollingText);
+        await _matrixContext.AddAsync(scrollingTextWithImage);
+        await _matrixContext.SaveChangesAsync();
+        
+        _logger.LogInformation("Seeding sample plain text...");
+
+        var examplePlainText = new PlainTextPayload()
+        {
+            Text = "Example plain text",
+            TextAlignment = TextAlignment.Center,
+            VerticalPositioning = VerticalPositioning.Center,
+            SplitByWord = true,
+            MatrixColorId = purple.Id,
+            MatrixFontId = fontMedium.Id
+        };
+
+        var examplePlainTextWithImage = new PlainTextPayload()
+        {
+            Text = "Example plain text",
+            TextAlignment = TextAlignment.Center,
+            VerticalPositioning = VerticalPositioning.Top,
+            SplitByWord = true,
+            MatrixColorId = green.Id,
+            MatrixFontId = fontMedium.Id,
+            BackgroundImageId = savedImageId
+        };
+        
+        await _matrixContext.AddAsync(examplePlainText);
+        await _matrixContext.AddAsync(examplePlainTextWithImage);
+        await _matrixContext.SaveChangesAsync();
         
         await _matrixContext.SaveChangesAsync();
     }

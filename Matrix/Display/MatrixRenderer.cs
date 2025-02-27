@@ -69,7 +69,7 @@ public static class MatrixRenderer
             throw new MatrixEntityNotFoundException(WebConstants.TextNotFound);
         }
         
-        var image = new Image<Rgb24>(MatrixUpdater.MatrixWidth, MatrixUpdater.MatrixHeight);
+        var image = plainText.BackgroundImage ?? new Image<Rgb24>(MatrixUpdater.MatrixWidth, MatrixUpdater.MatrixHeight);
 
         foreach (var parsedTextLine in plainText.ParseIntoTextLines())
         {
