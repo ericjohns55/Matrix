@@ -77,9 +77,11 @@ struct PlainText: Decodable {
 struct PlainTextPayload: Codable {
     let text: String
     let textAlignment: String
+    let verticalPositioning: String
     let splitByWord: Bool
     let matrixColorId: Int
     let matrixFontId: Int
+    var backgroundImageId: Int? = nil
 }
 
 struct ScrollingText: Decodable {
@@ -88,13 +90,15 @@ struct ScrollingText: Decodable {
 
 struct ScrollingTextPayload: Codable {
     let text: String
+    let verticalPositioning: String
     let scrollingDelay: Int
     let iterations: Int
     let matrixColorId: Int
     let matrixFontId: Int
+    var backgroundImageId: Int? = nil
 }
 
-struct SavedImage: Decodable, Identifiable {
+struct SavedImage: Decodable, Identifiable, Hashable {
     var id: Int
     var name: String
     var fileName: String

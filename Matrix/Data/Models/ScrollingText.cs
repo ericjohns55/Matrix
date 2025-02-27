@@ -73,7 +73,7 @@ public class ScrollingText
 
     private void ParseText()
     {
-        ParsedText = TextLineParser.SubstituteVariables(Text, ProgramState.CurrentVariables);
+        ParsedText = TextLineParser.SubstituteVariables(Text, ProgramState.CurrentVariables).Trim();
         MaxPosition = -1 * Font.Width * ParsedText.Length - MatrixUpdater.MatrixWidth;
     }
 

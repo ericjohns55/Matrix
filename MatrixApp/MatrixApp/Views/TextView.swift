@@ -23,12 +23,14 @@ struct TextView: View {
     @State private var text: String = ""
     @State private var selectedColor: MatrixColor? = nil
     @State private var selectedFont: MatrixFont? = nil
+    @State private var selectedImage: SavedImage? = nil
     
     @State private var iterations: Int = 3
     @State private var scrollInterval: Int = 10
     
     @State private var splitByWord: Bool = true
     @State private var alignment: String = "Center"
+    @State private var positioning: String = "Center"
     
     @State private var animationTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var animationEnabled: Bool = true
@@ -45,6 +47,8 @@ struct TextView: View {
         self.matrixInformation = matrixInformation ?? MatrixInformation(brightness: 50, width: 64, height: 32)
         self.textController = textController
         self.imagesController = imagesController
+        
+        self.selectedImage = imagesController.EmptyImage
     }
     
     var body: some View {
@@ -57,34 +61,43 @@ struct TextView: View {
                            height: CGFloat(ContentView.IMAGE_VIEW_SIZE))
                     .border(.gray)
             } else {
-                Image(uiImage: (renderedPreview ?? imagesController.awaitingContent))
-                    .resizable()
-                    .scaledToFill()
-                    .clipped()
-                    .offset(x: CGFloat(currentOffset))
-                    .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE),
-                           height: CGFloat(ContentView.IMAGE_VIEW_SIZE))
-                    .clipped()
-                    .border(.gray)
-                    .onTapGesture { _ in
-                        // this is because the image moves out of the frame as it scrolls
-                        // if the keyboard is active they want to clear the keyboard, not stop the animation
-                        if (keyboardResponder.keyboardActive) {
-                            UIApplication.shared.finishEditing()
-                        } else {
-                            animationEnabled.toggle()
-                            setupAnimation()
-                        }
-                    }
-                    .onReceive(animationTimer) { _ in
-                        if (animationEnabled && animationRunning) {
-                            currentOffset -= pixelsPerFrame
-                            
-                            if (currentOffset <= -1 * offsetBounds) {
-                                currentOffset = offsetBounds + Int(ContentView.IMAGE_VIEW_SIZE)
+                VStack(spacing: 4) {
+                    Image(uiImage: (renderedPreview ?? imagesController.awaitingContent))
+                        .resizable()
+                        .scaledToFill()
+                        .clipped()
+                        .offset(x: CGFloat(currentOffset))
+                        .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE),
+                               height: CGFloat(ContentView.IMAGE_VIEW_SIZE))
+                        .clipped()
+                        .border(.gray)
+                        .onTapGesture { _ in
+                            // this is because the image moves out of the frame as it scrolls
+                            // if the keyboard is active they want to clear the keyboard, not stop the animation
+                            if (keyboardResponder.keyboardActive) {
+                                UIApplication.shared.finishEditing()
+                            } else {
+                                animationEnabled.toggle()
+                                setupAnimation()
                             }
                         }
+                        .onReceive(animationTimer) { _ in
+                            if (animationEnabled && animationRunning) {
+                                currentOffset -= pixelsPerFrame
+                                
+                                if (currentOffset <= -1 * offsetBounds) {
+                                    currentOffset = offsetBounds + Int(ContentView.IMAGE_VIEW_SIZE)
+                                }
+                            }
+                        }
+                    
+                    if (textType == .scrolling && optionallyParseBackgroundImage() != nil) {
+                        Text("Background Image Preview not Available in App")
+                            .foregroundStyle(Color(red: 128 / 255, green: 0, blue: 0))
+                            .font(.system(size: 12))
+                            .italic()
                     }
+                }
             }
             
             
@@ -114,9 +127,25 @@ struct TextView: View {
                 Text("Text Content")
             }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
             
+            
+            LabeledContent {
+                Picker("Text Orientation", selection: $positioning) {
+                    Text("Top").tag("Top")
+                    Text("Center").tag("Center")
+                    Text("Bottom").tag("Bottom")
+                }
+                .onChange(of: positioning) {
+                    Task {
+                        await optionallyUpdateTextPreview()
+                    }
+                }
+            } label: {
+                Text("Vertical Positioning")
+            }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
+            
             if (textType == .stationary) {
                 LabeledContent {
-                    Picker("Text Orientation", selection: $alignment) {
+                    Picker("Text Alignment", selection: $alignment) {
                         Text("Left").tag("Left")
                         Text("Center").tag("Center")
                         Text("Right").tag("Right")
@@ -213,6 +242,27 @@ struct TextView: View {
                     Text("Scroll Interval (ms)")
                 }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
             }
+                        
+            LabeledContent {
+                Picker("Background Image", selection: $selectedImage) {
+                    ForEach(imagesController.savedImages) { savedImage in
+                        HStack {
+                            Text(savedImage.name)
+                        }
+                        .tag(savedImage as SavedImage?)
+                    }
+                } currentValueLabel: {
+                    Text(selectedImage?.name ?? "(None)")
+                }
+                .pickerStyle(MenuPickerStyle())
+                .onChange(of: selectedImage) {
+                    Task {
+                        await optionallyUpdateTextPreview()
+                    }
+                }
+            } label: {
+                Text("Background Image")
+            }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
             
             Button(action: {
                 Task {
@@ -240,20 +290,25 @@ struct TextView: View {
                 color: selectedColor,
                 font: selectedFont,
                 alignment: alignment,
-                splitByWord: splitByWord)
+                verticalPositioning: positioning,
+                splitByWord: splitByWord,
+                backgroundImageId: nil)
             .successfullyValidated
         } else {
             return textController.validateScrollingText(
                 text: text,
+                verticalPositioning: positioning,
                 scrollingDelay: scrollInterval,
                 iterations: iterations,
                 color: selectedColor,
-                font: selectedFont)
+                font: selectedFont,
+                backgroundImageId: nil)
             .successfullyValidated
         }
     }
         
     private func optionallyUpdateTextPreview(requeryImage: Bool = true) async {
+        let backgroundImageId = optionallyParseBackgroundImage()
         var renderedImage: UIImage? = renderedPreview
         
         if (requeryImage) {
@@ -263,14 +318,18 @@ struct TextView: View {
                     color: selectedColor,
                     font: selectedFont,
                     alignment: alignment,
-                    splitByWord: splitByWord)
+                    verticalPositioning: positioning,
+                    splitByWord: splitByWord,
+                    backgroundImageId: backgroundImageId)
             } else {
                 renderedImage = await textController.tryRenderScrollingTextPreview(
                     text: text,
+                    verticalPositioning: positioning,
                     scrollingInterval: scrollInterval,
                     iterations: iterations,
                     color: selectedColor,
-                    font: selectedFont)
+                    font: selectedFont,
+                    backgroundImageId: backgroundImageId)
             }
         }
         
@@ -298,20 +357,26 @@ struct TextView: View {
     }
     
     private func tryPostText() async {
+        let backgroundImageId = optionallyParseBackgroundImage()
+        
         if (textType == .stationary) {
             await textController.tryPostText(
                 text: text,
                 color: selectedColor,
                 font: selectedFont,
                 alignment: alignment,
-                splitByWord: splitByWord)
+                verticalPositioning: positioning,
+                splitByWord: splitByWord,
+                backgroundImageId: backgroundImageId)
         } else {
             await textController.tryPostScrollingText(
                 text: text,
+                verticalPositioning: positioning,
                 scrollingInterval: scrollInterval,
                 iterations: iterations,
                 color: selectedColor,
-                font: selectedFont)
+                font: selectedFont,
+                backgroundImageId: backgroundImageId)
         }
     }
     
@@ -341,5 +406,9 @@ struct TextView: View {
         }
         
         return text
+    }
+    
+    private func optionallyParseBackgroundImage() -> Int? {
+        return selectedImage?.id != -1 ? selectedImage?.id : nil ?? nil
     }
 }

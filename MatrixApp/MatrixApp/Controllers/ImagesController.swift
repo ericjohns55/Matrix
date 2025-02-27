@@ -24,6 +24,8 @@ class ImagesController: ObservableObject {
     
     @Published var savedImages: [SavedImage] = []
     
+    public var EmptyImage: SavedImage = SavedImage(id: -1, name: "(None)", fileName: "none.png")
+    
     init() {
         let emptyImage = ImagesController.createEmptyImage()
         
@@ -66,6 +68,7 @@ class ImagesController: ObservableObject {
         }
         
         self.savedImages = matrixResponse.data
+        self.savedImages.insert(EmptyImage, at: 0)
     }
     
     func setMatrixRenderingById(imageId: Int) async {

@@ -72,7 +72,7 @@ public class PlainText
         {
             parsedLines.Add(new ParsedTextLine()
             {
-                ParsedText = line.Builder.ToString(),
+                ParsedText = line.Builder.ToString().Trim(),
                 XPosition = xPosition(line.Builder.Length),
                 YPosition = yPosition(line.LineNumber),
                 FontLocation = Font.FileLocation,

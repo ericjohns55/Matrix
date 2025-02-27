@@ -30,7 +30,13 @@ class TextController: ObservableObject {
     
     @Published var renderedPreview: UIImage? = nil
     
-    func validatePlainText(text: String, color: MatrixColor?, font: MatrixFont?, alignment: String, splitByWord: Bool) -> PlainTextValidationResponse {
+    func validatePlainText(text: String,
+                           color: MatrixColor?,
+                           font: MatrixFont?,
+                           alignment: String,
+                           verticalPositioning: String,
+                           splitByWord: Bool,
+                           backgroundImageId: Int?) -> PlainTextValidationResponse {
         var invalidFieldsList: [String] = []
         
         if (text.isEmpty) {
@@ -50,17 +56,38 @@ class TextController: ObservableObject {
             invalidFieldsList.append("Alignment")
         }
         
+        let validPositionings = ["Top", "Center", "Bottom"]
+        if (verticalPositioning.isEmpty || !validPositionings.contains(verticalPositioning)) {
+            invalidFieldsList.append("Vertical Positioning")
+        }
+        
         let invalidFieldsFormatted = invalidFieldsList.isEmpty ? TextController.validText : invalidFieldsList.joined(separator: ", ")
         
         var payload: PlainTextPayload? = nil
         if (invalidFieldsList.isEmpty) {
-            payload = PlainTextPayload(text: text, textAlignment: alignment, splitByWord: splitByWord, matrixColorId: color!.id, matrixFontId: font!.id)
+            payload = PlainTextPayload(
+                text: text,
+                textAlignment: alignment,
+                verticalPositioning: verticalPositioning,
+                splitByWord: splitByWord,
+                matrixColorId: color!.id,
+                matrixFontId: font!.id,
+                backgroundImageId: backgroundImageId ?? nil)
         }
         
-        return PlainTextValidationResponse(successfullyValidated: invalidFieldsList.isEmpty, invalidFields: invalidFieldsFormatted, payload: payload)
+        return PlainTextValidationResponse(successfullyValidated: invalidFieldsList.isEmpty,
+                                           invalidFields: invalidFieldsFormatted,
+                                           payload: payload)
     }
     
-    func validateScrollingText(text: String, scrollingDelay: Int, iterations: Int, color: MatrixColor?, font: MatrixFont?) -> ScrollingTextValidationResponse {
+    func validateScrollingText(
+        text: String,
+        verticalPositioning: String,
+        scrollingDelay: Int,
+        iterations: Int,
+        color: MatrixColor?,
+        font: MatrixFont?,
+        backgroundImageId: Int?) -> ScrollingTextValidationResponse {
         var invalidFieldsList: [String] = []
         
         if (text.isEmpty) {
@@ -83,6 +110,11 @@ class TextController: ObservableObject {
             invalidFieldsList.append("Font")
         }
         
+        let validPositionings = ["Top", "Center", "Bottom"]
+        if (verticalPositioning.isEmpty || !validPositionings.contains(verticalPositioning)) {
+            invalidFieldsList.append("Vertical Positioning")
+        }
+        
         
         let invalidFieldsFormatted = invalidFieldsList.isEmpty ? TextController.validText : invalidFieldsList.joined(separator: ", ")
         
@@ -90,17 +122,33 @@ class TextController: ObservableObject {
         if (invalidFieldsList.isEmpty) {
             payload = ScrollingTextPayload(
                 text: text,
+                verticalPositioning: verticalPositioning,
                 scrollingDelay: scrollingDelay,
                 iterations: iterations == 0 ? -1 : iterations, // numberPad does not permit negatives
                 matrixColorId: color!.id,
-                matrixFontId: font!.id)
+                matrixFontId: font!.id,
+                backgroundImageId: backgroundImageId)
         }
         
         return ScrollingTextValidationResponse(successfullyValidated: invalidFieldsList.isEmpty, invalidFields: invalidFieldsFormatted, payload: payload)
     }
     
-    func tryRenderPlainTextPreview(text: String, color: MatrixColor?, font: MatrixFont?, alignment: String, splitByWord: Bool) async -> UIImage? {
-        let validationResponse = validatePlainText(text: text, color: color, font: font, alignment: alignment, splitByWord: splitByWord)
+    func tryRenderPlainTextPreview(
+        text: String,
+        color: MatrixColor?,
+        font: MatrixFont?,
+        alignment: String,
+        verticalPositioning: String,
+        splitByWord: Bool,
+        backgroundImageId: Int?) async -> UIImage? {
+            let validationResponse = validatePlainText(
+                text: text,
+                color: color,
+                font: font,
+                alignment: alignment,
+                verticalPositioning: verticalPositioning,
+                splitByWord: splitByWord,
+                backgroundImageId: backgroundImageId)
         
         if (validationResponse.successfullyValidated) {
             let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
@@ -116,8 +164,21 @@ class TextController: ObservableObject {
         return nil
     }
     
-    func tryRenderScrollingTextPreview(text: String, scrollingInterval: Int, iterations: Int, color: MatrixColor?, font: MatrixFont?) async -> UIImage? {
-        let validationResponse = validateScrollingText(text: text, scrollingDelay: scrollingInterval, iterations: iterations, color: color, font: font)
+    func tryRenderScrollingTextPreview(text: String,
+                                       verticalPositioning: String,
+                                       scrollingInterval: Int,
+                                       iterations: Int,
+                                       color: MatrixColor?,
+                                       font: MatrixFont?,
+                                       backgroundImageId: Int?) async -> UIImage? {
+        let validationResponse = validateScrollingText(
+            text: text,
+            verticalPositioning: verticalPositioning,
+            scrollingDelay: scrollingInterval,
+            iterations: iterations,
+            color: color,
+            font: font,
+            backgroundImageId: backgroundImageId)
         
         if (validationResponse.successfullyValidated) {
             let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
@@ -133,8 +194,21 @@ class TextController: ObservableObject {
         return nil
     }
     
-    func tryPostText(text: String, color: MatrixColor?, font: MatrixFont?, alignment: String, splitByWord: Bool) async {
-        let validationResponse = validatePlainText(text: text, color: color, font: font, alignment: alignment, splitByWord: splitByWord)
+    func tryPostText(text: String,
+                     color: MatrixColor?,
+                     font: MatrixFont?,
+                     alignment: String,
+                     verticalPositioning: String,
+                     splitByWord: Bool,
+                     backgroundImageId: Int?) async {
+        let validationResponse = validatePlainText(
+                        text: text,
+                        color: color,
+                        font: font,
+                        alignment: alignment,
+                        verticalPositioning: verticalPositioning,
+                        splitByWord: splitByWord,
+                        backgroundImageId: backgroundImageId)
         
         if (validationResponse.successfullyValidated) {
             let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
@@ -146,8 +220,21 @@ class TextController: ObservableObject {
         }
     }
     
-    func tryPostScrollingText(text: String, scrollingInterval: Int, iterations: Int, color: MatrixColor?, font: MatrixFont?) async {
-        let validationResponse = validateScrollingText(text: text, scrollingDelay: scrollingInterval, iterations: iterations, color: color, font: font)
+    func tryPostScrollingText(text: String,
+                              verticalPositioning: String,
+                              scrollingInterval: Int,
+                              iterations: Int,
+                              color: MatrixColor?,
+                              font: MatrixFont?,
+                              backgroundImageId: Int?) async {
+        let validationResponse = validateScrollingText(
+            text: text,
+            verticalPositioning: verticalPositioning,
+            scrollingDelay: scrollingInterval,
+            iterations: iterations,
+            color: color,
+            font: font,
+            backgroundImageId: backgroundImageId)
         
         
         if (validationResponse.successfullyValidated) {
