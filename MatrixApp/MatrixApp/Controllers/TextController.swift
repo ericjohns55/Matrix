@@ -11,13 +11,13 @@ import Foundation
 struct PlainTextValidationResponse {
     var successfullyValidated: Bool
     var invalidFields: String
-    var payload: PlainTextPayload?
+    var payload: PlainTextPayloadEncodable?
 }
 
 struct ScrollingTextValidationResponse {
     var successfullyValidated: Bool
     var invalidFields: String
-    var payload: ScrollingTextPayload?
+    var payload: ScrollingTextPayloadEncodable?
 }
 
 @MainActor
@@ -27,6 +27,8 @@ class TextController: ObservableObject {
     
     @Published var colors: [MatrixColor] = [MatrixColor(id: -1, name: "Temp", red: 0, green: 0, blue: 0, deleted: false)]
     @Published var fonts: [MatrixFont] = [MatrixFont(id: -1, name: "Test", fileLocation: "none", width: -1, height: -1)]
+    @Published var savedPlainText: [PlainTextPayload] = []
+    @Published var savedScrollingText: [ScrollingTextPayload] = []
     
     @Published var renderedPreview: UIImage? = nil
     
@@ -63,9 +65,9 @@ class TextController: ObservableObject {
         
         let invalidFieldsFormatted = invalidFieldsList.isEmpty ? TextController.validText : invalidFieldsList.joined(separator: ", ")
         
-        var payload: PlainTextPayload? = nil
+        var payload: PlainTextPayloadEncodable? = nil
         if (invalidFieldsList.isEmpty) {
-            payload = PlainTextPayload(
+            payload = PlainTextPayloadEncodable(
                 text: text,
                 textAlignment: alignment,
                 verticalPositioning: verticalPositioning,
@@ -118,9 +120,9 @@ class TextController: ObservableObject {
         
         let invalidFieldsFormatted = invalidFieldsList.isEmpty ? TextController.validText : invalidFieldsList.joined(separator: ", ")
         
-        var payload: ScrollingTextPayload? = nil
+        var payload: ScrollingTextPayloadEncodable? = nil
         if (invalidFieldsList.isEmpty) {
-            payload = ScrollingTextPayload(
+            payload = ScrollingTextPayloadEncodable(
                 text: text,
                 verticalPositioning: verticalPositioning,
                 scrollingDelay: scrollingDelay,
@@ -250,6 +252,72 @@ class TextController: ObservableObject {
     func loadAllData() async {
         await self.getColors()
         await self.getFonts()
+        await self.loadSavedPlainTexts()
+        await self.loadSavedScrollingTexts()
+    }
+    
+    func loadSavedPlainTexts() async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+            
+        guard let matrixResponse: MatrixResponse<[PlainTextPayload]> = try? await client.GetRequest(route: "text/plain?trimHeader=true") else {
+            self.savedPlainText = []
+            return
+        }
+            
+        self.savedPlainText = matrixResponse.data
+    }
+    
+    func deletePlainText(plainTextId: Int) async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+        guard let _: MatrixResponse<PlainTextPayload> = try? await client.DeleteRequest(route: "text/plain/\(plainTextId)") else {
+            return
+        }
+    }
+    
+    func saveOrUpdatePlainText(plainText: PlainTextPayloadEncodable, update: Bool = false, plainTextId: Int = -1) async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+        
+        if (update) {
+            guard let _: MatrixResponse<PlainTextPayload> = try? await client.PutRequest(route: "text/plain/\(plainTextId)", body: plainText) else {
+                return
+            }
+        } else {
+            guard let _: MatrixResponse<PlainTextPayload> = try? await client.PostRequest(route: "text/plain/save", body: plainText) else {
+                return
+            }
+        }
+    }
+    
+    func loadSavedScrollingTexts() async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+            
+        guard let matrixResponse: MatrixResponse<[ScrollingTextPayload]> = try? await client.GetRequest(route: "text/scrolling?trimHeader=true") else {
+            self.savedScrollingText = []
+            return
+        }
+            
+        self.savedScrollingText = matrixResponse.data
+    }
+    
+    func deleteScrollingText(scrollingTextId: Int) async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+        guard let _: MatrixResponse<PlainTextPayload> = try? await client.DeleteRequest(route: "text/scrolling/\(scrollingTextId)") else {
+            return
+        }
+    }
+    
+    func saveOrUpdateScrollingText(scrollingText: ScrollingTextPayloadEncodable, update: Bool = false, scrollingTextId: Int = -1) async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+        
+        if (update) {
+            guard let _: MatrixResponse<ScrollingTextPayload> = try? await client.PutRequest(route: "text/scrolling/\(scrollingTextId)", body: scrollingText) else {
+                return
+            }
+        } else {
+            guard let _: MatrixResponse<[ScrollingTextPayload]> = try? await client.PostRequest(route: "text/scrolling/save", body: scrollingText) else {
+                return
+            }
+        }
     }
     
     func getColors() async {

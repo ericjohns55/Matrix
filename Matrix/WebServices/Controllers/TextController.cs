@@ -81,9 +81,9 @@ public class TextController : MatrixBaseController
 
     [HttpGet("plain")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<List<PlainTextPayload>>))]
-    public async Task<IActionResult> GetAllSavedPlainText()
+    public async Task<IActionResult> GetAllSavedPlainText(bool trimHeader = false)
     {
-        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.GetSavedPlainText()));
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.GetSavedPlainText(trimHeader)));
     }
 
     [HttpPost("plain/render")]
@@ -151,9 +151,9 @@ public class TextController : MatrixBaseController
 
     [HttpGet("scrolling")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<List<ScrollingTextPayload>>))]
-    public async Task<IActionResult> GetAllScrollingText()
+    public async Task<IActionResult> GetAllScrollingText(bool trimHeader = false)
     {
-        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.GetSavedScrollingText()));
+        return Ok(await ExecuteToMatrixResponseAsync(() => _textService.GetSavedScrollingText(trimHeader)));
     }
     
     [HttpPost("scrolling/render")]

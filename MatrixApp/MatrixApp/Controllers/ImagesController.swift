@@ -25,7 +25,7 @@ class ImagesController: ObservableObject {
     @Published var savedImages: [SavedImage] = []
     @Published var savedImagesWithNone: [SavedImage] = []
     
-    public var EmptyImage: SavedImage = SavedImage(id: -1, name: "(None)", fileName: "none.png")
+    public var emptyImage: SavedImage = SavedImage(id: -1, name: "(None)", fileName: "none.png")
     
     init() {
         let emptyImage = ImagesController.createEmptyImage()
@@ -62,7 +62,7 @@ class ImagesController: ObservableObject {
     
     func loadSavedImages() async {
         self.savedImages = []
-        self.savedImagesWithNone = [EmptyImage]
+        self.savedImagesWithNone = [emptyImage]
         
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
         
@@ -74,7 +74,7 @@ class ImagesController: ObservableObject {
         print(matrixResponse.data.count)
         
         self.savedImages = matrixResponse.data
-        self.savedImagesWithNone = [EmptyImage] + self.savedImages
+        self.savedImagesWithNone = [emptyImage] + self.savedImages
     }
     
     func setMatrixRenderingById(imageId: Int) async {
@@ -127,12 +127,12 @@ class ImagesController: ObservableObject {
         }
     }
     
-    func imageFromBase64(base64String: String) -> UIImage {
+    func imageFromBase64(base64String: String, returnEmptyImage: Bool = false) -> UIImage {
         if let base64 = Data(base64Encoded: base64String), let uiImage = UIImage(data: base64) {
             return uiImage
         }
         
-        return self.failedToLoad
+        return returnEmptyImage ? ImagesController.createEmptyImage() : self.failedToLoad
     }
     
     private static func createEmptyImage() -> UIImage {

@@ -13,6 +13,7 @@ enum TextType {
 
 struct TextView: View {
     private let ROW_SIZE = CGFloat(32)
+    private let LIST_ROW_SIZE = CGFloat(48)
     private let PADDING = CGFloat(8)
     
     @State private var keyboardResponder = KeyboardResponder()
@@ -38,9 +39,13 @@ struct TextView: View {
     @State private var offsetBounds: Int = 0
     @State private var currentOffset: Int = 0
     @State private var pixelsPerFrame: Int = 0
+        
+    @State private var selectedPlainText: PlainTextPayload? = nil
+    @State private var selectedScrollingText: ScrollingTextPayload? = nil
+    @State private var selectionEdited: Bool = false
     
+    @ObservedObject var textController: TextController
     let matrixInformation: MatrixInformation
-    let textController: TextController
     let imagesController: ImagesController
     
     init(matrixInformation: MatrixInformation?, textController: TextController, imagesController: ImagesController) {
@@ -48,7 +53,7 @@ struct TextView: View {
         self.textController = textController
         self.imagesController = imagesController
         
-        self.selectedImage = imagesController.EmptyImage
+        self.selectedImage = imagesController.emptyImage
     }
     
     var body: some View {
@@ -263,23 +268,164 @@ struct TextView: View {
             } label: {
                 Text("Background Image")
             }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
-            
-            Button(action: {
-                Task {
-                    await tryPostText()
+                        
+            HStack {
+                Button(action: {
+                    Task {
+                        await tryPostText()
+                    }
+                }) {
+                    Text("Send to Matrix")
                 }
-            }) {
-                Text("Send to Matrix")
+                .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50)
+                .border(.gray)
+                .padding(10)
+                
+                Button(action: {
+                    var textId = 0;
+                    
+                    if (selectedPlainText != nil) {
+                        textId = selectedPlainText!.id
+                    } else if (selectedScrollingText != nil) {
+                        textId = selectedScrollingText!.id
+                    }
+                    
+                    Task {
+                        await saveOrUpdateText(textId: textId)
+                        
+                        if (textType == .stationary) {
+                            await requerySavedPlainText()
+                        } else {
+                            await requerySavedScrollingText()
+                        }
+                    }
+                }) {
+                    Text(((selectedPlainText != nil && textType == .stationary)
+                          || (selectedScrollingText != nil && textType == .scrolling)) ? "Update Text" : "Save Text")
+                }
+                .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50)
+                .border(.gray)
+                .padding(10)
             }
-            .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE), height: ROW_SIZE) // TODO: whole bounds need to be clickable
-            .border(.gray)
-            .padding(PADDING)
+            
+            if (textType == .stationary) {
+                List {
+                    ForEach(textController.savedPlainText, id: \.id) { plainTextPayload in
+                        HStack {
+                            Image(uiImage: imagesController.imageFromBase64(base64String: plainTextPayload.backgroundImage?.base64Rendering ?? "invalid"))
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: LIST_ROW_SIZE, height: LIST_ROW_SIZE)
+                                .border(.gray)
+                            Text(plainTextPayload.text)
+                            
+                            if (selectedPlainText == plainTextPayload) {
+                                Image(systemName: "checkmark.circle.fill")
+                            }
+                        }
+                        .frame(height: LIST_ROW_SIZE)
+                        .contentShape(Rectangle())
+                        .simultaneousGesture(TapGesture().onEnded {
+                            selectedPlainText = (selectedPlainText == plainTextPayload) ? nil : plainTextPayload
+                            selectionEdited = false
+                            
+                            if (selectedPlainText != nil) {
+                                text = plainTextPayload.text
+                                alignment = plainTextPayload.textAlignment
+                                positioning = plainTextPayload.verticalPositioning
+                                splitByWord = plainTextPayload.splitByWord
+                                loadSavedDetails(fontId: plainTextPayload.matrixFontId, colorId: plainTextPayload.matrixColorId, imageId: plainTextPayload.backgroundImageId)
+                            }
+                        })
+                    }
+                    .onDelete { offsets in
+                        let plainText = textController.savedPlainText[offsets.first!]
+                        
+                        Task {
+                            await textController.deletePlainText(plainTextId: plainText.id)
+                            await requerySavedPlainText()
+                        }
+                    }
+                }
+                .refreshable {
+                    await textController.loadSavedPlainTexts()
+                }
+            } else {
+                List {
+                    ForEach(textController.savedScrollingText, id: \.id) { scrollingTextPayload in
+                        HStack {
+                            Image(uiImage: imagesController.imageFromBase64(base64String: scrollingTextPayload.backgroundImage?.base64Rendering ?? "invalid"))
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: LIST_ROW_SIZE, height: LIST_ROW_SIZE)
+                                .border(.gray)
+                            Text(scrollingTextPayload.text)
+                            
+                            if (selectedScrollingText == scrollingTextPayload) {
+                                Image(systemName: "checkmark.circle.fill")
+                            }
+                        }
+                        .frame(height: LIST_ROW_SIZE)
+                        .contentShape(Rectangle())
+                        .simultaneousGesture(TapGesture().onEnded {
+                            selectedScrollingText = (selectedScrollingText == scrollingTextPayload) ? nil : scrollingTextPayload
+                            selectionEdited = false
+                                                        
+                            if (selectedScrollingText != nil) {
+                                text = selectedScrollingText!.text
+                                positioning = selectedScrollingText!.verticalPositioning
+                                scrollInterval = selectedScrollingText!.scrollingDelay
+                                iterations = selectedScrollingText!.iterations
+                                loadSavedDetails(fontId: selectedScrollingText!.matrixFontId, colorId: selectedScrollingText!.matrixColorId, imageId: selectedScrollingText!.backgroundImageId)
+                            }
+                        })
+                    }
+                    .onDelete { offsets in
+                        let scrollingText = textController.savedScrollingText[offsets.first!]
+                            
+                        Task {
+                            await textController.deleteScrollingText(scrollingTextId: scrollingText.id)
+                            await requerySavedScrollingText()
+                        }
+                    }
+                }
+                .refreshable {
+                    await textController.loadSavedScrollingTexts()
+                }
+            }
         }
         .padding(.bottom, keyboardResponder.keyboardHeight)
         .animation(.easeOut(duration: 0.2), value: keyboardResponder.keyboardHeight)
         .background(Color(UIColor.systemBackground))
         .onTapGesture {
             UIApplication.shared.finishEditing()
+        }
+    }
+    
+    private func loadSavedDetails(fontId: Int, colorId: Int, imageId: Int?) {
+        selectedColor = textController.colors.first(where: { $0.id == colorId })
+        selectedFont = textController.fonts.first(where: { $0.id == fontId })
+        
+        if (imageId != nil) {
+            selectedImage = imagesController.savedImages.first(where: { $0.id == imageId! })
+        } else {
+            selectedImage = imagesController.emptyImage
+        }
+    }
+    
+    private func requerySavedPlainText() async {
+        await textController.loadSavedPlainTexts()
+        
+        if (selectedPlainText != nil) {
+            selectedPlainText = textController.savedPlainText.first(where: { $0.id == selectedPlainText!.id })
+        }
+    }
+    
+    private func requerySavedScrollingText() async {
+        await textController.loadSavedScrollingTexts()
+        
+        if (selectedScrollingText != nil) {
+            selectedScrollingText = textController.savedScrollingText.first(where: { $0.id == selectedScrollingText!.id })
         }
     }
     
@@ -310,6 +456,10 @@ struct TextView: View {
     private func optionallyUpdateTextPreview(requeryImage: Bool = true) async {
         let backgroundImageId = optionallyParseBackgroundImage()
         var renderedImage: UIImage? = renderedPreview
+        
+        if (selectedPlainText != nil || selectedScrollingText != nil) {
+            selectionEdited = true
+        }
         
         if (requeryImage) {
             if (textType == .stationary) {
@@ -377,6 +527,46 @@ struct TextView: View {
                 color: selectedColor,
                 font: selectedFont,
                 backgroundImageId: backgroundImageId)
+        }
+    }
+    
+    private func saveOrUpdateText(textId: Int = 0) async {
+        if (textType == .stationary) {
+            let payload = textController.validatePlainText(
+                text: text,
+                color: selectedColor,
+                font: selectedFont,
+                alignment: alignment,
+                verticalPositioning: positioning,
+                splitByWord: splitByWord,
+                backgroundImageId: selectedImage?.id)
+                .payload
+            
+            if (payload != nil) {
+                if (selectionEdited) {
+                    await textController.saveOrUpdatePlainText(plainText: payload!, update: true, plainTextId: textId)
+                } else {
+                    await textController.saveOrUpdatePlainText(plainText: payload!)
+                }
+            }
+        } else {
+            let payload = textController.validateScrollingText(
+                text: text,
+                verticalPositioning: positioning,
+                scrollingDelay: scrollInterval,
+                iterations: iterations,
+                color: selectedColor,
+                font: selectedFont,
+                backgroundImageId: selectedImage?.id)
+            .payload
+            
+            if (payload != nil) {
+                if (selectionEdited) {
+                    await textController.saveOrUpdateScrollingText(scrollingText: payload!, update: true, scrollingTextId: textId)
+                } else {
+                    await textController.saveOrUpdateScrollingText(scrollingText: payload!)
+                }
+            }
         }
     }
     

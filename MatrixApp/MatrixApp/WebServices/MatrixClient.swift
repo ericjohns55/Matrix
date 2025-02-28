@@ -46,6 +46,7 @@ class MatrixClient {
         return response
     }
     
+    // TODO: make helpers for private RequestWithBody and RequestWithoutBody that POST/PUT and GET/DELETE respectively call
     func DeleteRequest<T: Decodable>(route: String) async throws -> T? {
         let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
         var response: T?

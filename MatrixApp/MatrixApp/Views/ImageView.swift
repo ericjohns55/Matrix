@@ -20,6 +20,7 @@ struct ImageView: View {
     
     @State private var selectedSavedImage: SavedImage? = nil
     @State private var imageName: String = ""
+    @State private var selectionEdited: Bool = false
     
     @State private var showImageNameDialog = false
     
@@ -48,7 +49,7 @@ struct ImageView: View {
             HStack {
                 Button(action: {
                     Task {
-                        if (selectedSavedImage != nil) {
+                        if (selectedSavedImage != nil && !selectionEdited) {
                             await imagesController.setMatrixRenderingById(imageId: selectedSavedImage!.id)
                         } else {
                             await imagesController.postUIImage(image: croppedImage)
@@ -62,7 +63,9 @@ struct ImageView: View {
                 .padding(10)
                 
                 Button(action: {
-                    showImageNameDialog = true
+                    if (croppedImage != nil) {
+                        showImageNameDialog = true
+                    }
                 }) {
                     Text((selectedSavedImage != nil) ? "Update Image" : "Save Image")
                 }
@@ -72,7 +75,7 @@ struct ImageView: View {
                 .alert("Enter Image Name", isPresented: $showImageNameDialog) {
                     TextField("", text: $imageName)
                     HStack {
-                        Button("Submit", role: .cancel) {
+                        Button("Submit", role: .cancel) { 
                             Task {
                                 if (selectedSavedImage != nil) {
                                     await imagesController.updateUIImage(imageId: selectedSavedImage!.id, image: croppedImage ?? loadedImage, imageName: imageName)
@@ -115,6 +118,10 @@ struct ImageView: View {
                         
                         imageName = selectedSavedImage?.name ?? ""
                         croppedImage = nil
+                        
+                        if (selectedSavedImage != nil) {
+                            selectionEdited = false
+                        }
                     })
                 }
                 .onDelete { offsets in
@@ -143,6 +150,10 @@ struct ImageView: View {
                 SwiftyCropView(imageToCrop: selectedImage,
                                maskShape: .square) { croppedImage in
                     self.croppedImage = croppedImage?.resize(width: 64, height: 64)
+                    
+                    if (selectedSavedImage != nil) {
+                        selectionEdited = true
+                    }
                 }
             }
         }

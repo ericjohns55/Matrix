@@ -49,7 +49,7 @@ public class TextService
         }
     }
 
-    public async Task<List<PlainTextPayload>> GetSavedPlainText()
+    public async Task<List<PlainTextPayload>> GetSavedPlainText(bool trimHeader = false)
     {
         var savedPlainTexts = await _matrixContext.SavedPlainText
             .Include(text => text.Color)
@@ -63,7 +63,7 @@ public class TextService
             if (plainTextPayload.BackgroundImage != null && plainTextPayload.BackgroundImageId != null)
             {
                 var image = await _imageService.GetImageById(plainTextPayload.BackgroundImageId.Value, true);
-                plainTextPayload.BackgroundImage.Base64Rendering = await _imageService.GetBase64OfImageById(image.Id);
+                plainTextPayload.BackgroundImage.Base64Rendering = await _imageService.GetBase64OfImageById(image.Id, trimHeader);
             }
         }
 
@@ -202,7 +202,7 @@ public class TextService
         }
     }
     
-    public async Task<List<ScrollingTextPayload>> GetSavedScrollingText()
+    public async Task<List<ScrollingTextPayload>> GetSavedScrollingText(bool trimHeader = false)
     {
         var savedScrollingTexts = await _matrixContext.SavedScrollingText
             .Include(text => text.Color)
@@ -216,7 +216,7 @@ public class TextService
             if (scrollingTextPayload.BackgroundImage != null && scrollingTextPayload.BackgroundImageId != null)
             {
                 var image = await _imageService.GetImageById(scrollingTextPayload.BackgroundImageId.Value, true);
-                scrollingTextPayload.BackgroundImage.Base64Rendering = await _imageService.GetBase64OfImageById(image.Id);
+                scrollingTextPayload.BackgroundImage.Base64Rendering = await _imageService.GetBase64OfImageById(image.Id, trimHeader);
             }
         }
 

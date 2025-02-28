@@ -77,7 +77,19 @@ struct PlainText: Decodable {
     let shouldUpdateSecondly: Bool
 }
 
-struct PlainTextPayload: Codable {
+struct PlainTextPayload: Decodable, Identifiable, Hashable {
+    let id: Int
+    let text: String
+    let textAlignment: String
+    let verticalPositioning: String
+    let splitByWord: Bool
+    let matrixColorId: Int
+    let matrixFontId: Int
+    var backgroundImageId: Int? = nil
+    var backgroundImage: SavedImage? = nil
+}
+
+struct PlainTextPayloadEncodable: Codable {
     let text: String
     let textAlignment: String
     let verticalPositioning: String
@@ -100,7 +112,19 @@ struct ScrollingText: Decodable {
     let iterationsLeft: Int
 }
 
-struct ScrollingTextPayload: Codable {
+struct ScrollingTextPayload: Decodable, Identifiable, Hashable {
+    let id: Int
+    let text: String
+    let verticalPositioning: String
+    let scrollingDelay: Int
+    let iterations: Int
+    let matrixColorId: Int
+    let matrixFontId: Int
+    var backgroundImageId: Int? = nil
+    var backgroundImage: SavedImage? = nil
+}
+
+struct ScrollingTextPayloadEncodable: Codable {
     let text: String
     let verticalPositioning: String
     let scrollingDelay: Int

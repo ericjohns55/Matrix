@@ -18,7 +18,7 @@ struct ContentView: View {
     @StateObject var matrixController = MatrixController()
     @StateObject var textController = TextController()
     @StateObject var imagesController = ImagesController()
-    @State private var selectedTab: AppPage = .image
+    @State private var selectedTab: AppPage = .overview
     
         
     var body: some View {
@@ -47,7 +47,7 @@ struct ContentView: View {
                     TextView(
                         matrixInformation: matrixController.programOverview.matrixInformation,
                         textController: textController,
-                        imagesController: imagesController)
+                        imagesController: imagesController).frame(height: 1000)
                 }
             }
             .tabItem {
