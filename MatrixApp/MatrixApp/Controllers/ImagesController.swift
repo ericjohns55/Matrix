@@ -23,6 +23,7 @@ class ImagesController: ObservableObject {
     @Published var invalidContent: UIImage
     
     @Published var savedImages: [SavedImage] = []
+    @Published var savedImagesWithNone: [SavedImage] = []
     
     public var EmptyImage: SavedImage = SavedImage(id: -1, name: "(None)", fileName: "none.png")
     
@@ -60,6 +61,9 @@ class ImagesController: ObservableObject {
     }
     
     func loadSavedImages() async {
+        self.savedImages = []
+        self.savedImagesWithNone = [EmptyImage]
+        
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
         
         guard let matrixResponse: MatrixResponse<[SavedImage]> = try? await client.GetRequest(route: "image/saved?trimHeader=true") else {
@@ -67,19 +71,19 @@ class ImagesController: ObservableObject {
             return
         }
         
+        print(matrixResponse.data.count)
+        
         self.savedImages = matrixResponse.data
-        self.savedImages.insert(EmptyImage, at: 0)
+        self.savedImagesWithNone = [EmptyImage] + self.savedImages
     }
     
     func setMatrixRenderingById(imageId: Int) async {
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
-        
-        print("ID: \(imageId)")
-            
+                    
         guard let _: MatrixResponse<SavedImage> = try? await client.PostRequest(route: "image/\(imageId)", body: nil) else {
             print("Failed to post image")
             return
-            }
+        }
     }
     
     func postUIImage(image: UIImage?) async {
@@ -90,6 +94,36 @@ class ImagesController: ObservableObject {
             guard let _: MatrixResponse<String> = try? await client.PostRequest(route: "image/base64", body: imagePayload) else {
                 return
             }
+        }
+    }
+    
+    func saveUIImage(image: UIImage?, imageName: String) async {
+        if let imageData = image?.pngData() {
+            let imagePayload = ImagePayload(imageName: imageName, base64Image: imageData.base64EncodedString())
+                
+            let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+            guard let _: MatrixResponse<SavedImage> = try? await client.PostRequest(route: "image/save", body: imagePayload) else {
+                return
+            }
+        }
+    }
+    
+    func updateUIImage(imageId: Int, image: UIImage?, imageName: String) async {
+        if let imageData = image?.pngData() {
+            print("ERROR")
+            let imagePayload = ImagePayload(imageName: imageName, base64Image: imageData.base64EncodedString())
+                
+            let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+            guard let _: MatrixResponse<SavedImage> = try? await client.PutRequest(route: "image/\(imageId)", body: imagePayload) else {
+                return
+            }
+        }
+    }
+    
+    func deleteImageById(imageId: Int) async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+        guard let _: MatrixResponse<SavedImage> = try? await client.DeleteRequest(route: "image/\(imageId)") else {
+            return
         }
     }
     

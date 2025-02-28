@@ -245,7 +245,7 @@ struct TextView: View {
                         
             LabeledContent {
                 Picker("Background Image", selection: $selectedImage) {
-                    ForEach(imagesController.savedImages) { savedImage in
+                    ForEach(imagesController.savedImagesWithNone) { savedImage in
                         HStack {
                             Text(savedImage.name)
                         }

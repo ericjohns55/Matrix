@@ -66,11 +66,14 @@ struct MatrixTimer: Decodable {
 }
 
 struct PlainText: Decodable {
+    let text: String
     let parsedText: String?
     let splitByWord: Bool
     let textAlignment: String
+    let verticalPositioning: String
     let color: MatrixColor
     let font: MatrixFont
+    let background: SavedImage?
     let shouldUpdateSecondly: Bool
 }
 
@@ -85,7 +88,16 @@ struct PlainTextPayload: Codable {
 }
 
 struct ScrollingText: Decodable {
+    let text: String
+    let color: MatrixColor
+    let font: MatrixFont
+    let background: SavedImage?
     let scrollingDelay: Int
+    let iterations: Int
+    let parsedText: String
+    let verticalPositioning: String
+    let currentPosition: Int
+    let iterationsLeft: Int
 }
 
 struct ScrollingTextPayload: Codable {

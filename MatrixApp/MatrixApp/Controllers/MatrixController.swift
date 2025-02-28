@@ -40,13 +40,14 @@ class MatrixController: ObservableObject {
         self.programOverview = matrixResponse.data
     }
     
-    func restoreMatrix() async -> Bool {
+    func restoreMatrix() async -> ProgramOverview {
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
             
-        guard let response: MatrixResponse<Bool> = try? await client.PostRequest(route: "matrix/restore", body: nil) else {
-            return false
+        guard let response: MatrixResponse<ProgramOverview> = try? await client.PostRequest(route: "matrix/restore", body: nil) else {
+            return programOverview
         }
         
-        return response.data
+        programOverview = response.data
+        return programOverview
     }
 }

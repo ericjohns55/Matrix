@@ -24,7 +24,7 @@ public class ImageService
 
     public async Task<List<SavedImage>> GetSavedImages(int scaleFactor = 0, bool trimHeader = false, string? filePath = null)
     {
-        var images = await _matrixContext.SavedImage.OrderBy(image => image.Name).ToListAsync();
+        var images = await _matrixContext.SavedImage.OrderBy(image => image.Name.ToLower()).ToListAsync();
 
         foreach (var image in images)
         {
