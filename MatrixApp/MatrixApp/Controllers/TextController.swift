@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 import Foundation
 
 struct PlainTextValidationResponse {
@@ -202,7 +203,7 @@ class TextController: ObservableObject {
                      alignment: String,
                      verticalPositioning: String,
                      splitByWord: Bool,
-                     backgroundImageId: Int?) async {
+                     backgroundImageId: Int?) async throws {
         let validationResponse = validatePlainText(
                         text: text,
                         color: color,
@@ -211,7 +212,7 @@ class TextController: ObservableObject {
                         verticalPositioning: verticalPositioning,
                         splitByWord: splitByWord,
                         backgroundImageId: backgroundImageId)
-        
+                
         if (validationResponse.successfullyValidated) {
             let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
             let payload = validationResponse.payload!
@@ -219,6 +220,8 @@ class TextController: ObservableObject {
             guard let _: MatrixResponse<PlainText> = try? await client.PostRequest(route: "text/plain", body: payload) else {
                 return
             }
+        } else {
+            throw ClientError.runtimeError("Could not validate payload")
         }
     }
     
@@ -228,7 +231,7 @@ class TextController: ObservableObject {
                               iterations: Int,
                               color: MatrixColor?,
                               font: MatrixFont?,
-                              backgroundImageId: Int?) async {
+                              backgroundImageId: Int?) async throws {
         let validationResponse = validateScrollingText(
             text: text,
             verticalPositioning: verticalPositioning,
@@ -246,12 +249,14 @@ class TextController: ObservableObject {
             guard let _: MatrixResponse<ScrollingText> = try? await client.PostRequest(route: "text/scrolling", body: payload) else {
                 return
             }
+        } else {
+            throw ClientError.runtimeError("Could not validate payload")
         }
     }
     
     func loadAllData() async {
-        await self.getColors()
-        await self.getFonts()
+        await self.loadColors()
+        await self.loadFonts()
         await self.loadSavedPlainTexts()
         await self.loadSavedScrollingTexts()
     }
@@ -320,7 +325,7 @@ class TextController: ObservableObject {
         }
     }
     
-    func getColors() async {
+    func loadColors() async {
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
         
         guard let matrixResponse: MatrixResponse<[MatrixColor]> = try? await client.GetRequest(route: "colors") else {
@@ -331,7 +336,7 @@ class TextController: ObservableObject {
         self.colors = matrixResponse.data
     }
     
-    func getFonts() async {
+    func loadFonts() async {
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
         
         guard let matrixResponse: MatrixResponse<[MatrixFont]> = try? await client.GetRequest(route: "text/fonts") else {

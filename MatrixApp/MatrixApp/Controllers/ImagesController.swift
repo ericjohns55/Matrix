@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 import Foundation
 
 struct ImagePayload: Codable {
@@ -14,21 +15,26 @@ struct ImagePayload: Codable {
 }
 
 @MainActor
-class ImagesController: ObservableObject {
-    @Published var matrixRendering: UIImage = UIImage()
+class ImagesController: BaseController {
+    @Published var matrixRendering: UIImage?
     
     @Published var awaitingContent: UIImage
     @Published var couldNotConnect: UIImage
     @Published var failedToLoad: UIImage
     @Published var invalidContent: UIImage
+    @Published var loading: UIImage
     
     @Published var savedImages: [SavedImage] = []
     @Published var savedImagesWithNone: [SavedImage] = []
     
     public var emptyImage: SavedImage = SavedImage(id: -1, name: "(None)", fileName: "none.png")
-    
-    init() {
+        
+    override init() {
         let emptyImage = ImagesController.createEmptyImage()
+        
+        self.loading = ImagesController.loadImageFromAssetsOrDefault(assetName: "Loading", emptyImage: emptyImage)
+        
+        self.matrixRendering = ImagesController.loadImageFromAssetsOrDefault(assetName: "Loading", emptyImage: emptyImage)
         
         self.awaitingContent = ImagesController.loadImageFromAssetsOrDefault(assetName: "AwaitingContent", emptyImage: emptyImage)
         
@@ -37,8 +43,6 @@ class ImagesController: ObservableObject {
         self.failedToLoad = ImagesController.loadImageFromAssetsOrDefault(assetName: "FailedToLoad", emptyImage: emptyImage)
         
         self.invalidContent = ImagesController.loadImageFromAssetsOrDefault(assetName: "InvalidContent", emptyImage: emptyImage)
-        
-        matrixRendering = awaitingContent
     }
     
     private static func loadImageFromAssetsOrDefault(assetName: String, emptyImage: UIImage) -> UIImage {
@@ -70,8 +74,6 @@ class ImagesController: ObservableObject {
             self.savedImages = []
             return
         }
-        
-        print(matrixResponse.data.count)
         
         self.savedImages = matrixResponse.data
         self.savedImagesWithNone = [emptyImage] + self.savedImages
@@ -110,7 +112,6 @@ class ImagesController: ObservableObject {
     
     func updateUIImage(imageId: Int, image: UIImage?, imageName: String) async {
         if let imageData = image?.pngData() {
-            print("ERROR")
             let imagePayload = ImagePayload(imageName: imageName, base64Image: imageData.base64EncodedString())
                 
             let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
@@ -126,7 +127,7 @@ class ImagesController: ObservableObject {
             return
         }
     }
-    
+        
     func imageFromBase64(base64String: String, returnEmptyImage: Bool = false) -> UIImage {
         if let base64 = Data(base64Encoded: base64String), let uiImage = UIImage(data: base64) {
             return uiImage

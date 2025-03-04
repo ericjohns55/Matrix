@@ -18,5 +18,8 @@ public class ClockFace
     [NotMapped]
     public string? Base64Rendering { get; set; } = null;
 
+    [NotMapped]
+    public bool IsCurrentFace { get; set; } = false;
+
     public bool UpdatesEverySecond => TextLines?.Any(line => line.Text.Contains(VariableConstants.SecondVariable)) ?? false;
 }

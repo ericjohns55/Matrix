@@ -56,6 +56,10 @@ struct ClockFace: Identifiable, Decodable {
     let isTimerFace: Bool
     let deleted: Bool
     let updatesEverySecond: Bool
+    let isCurrentFace: Bool
+    let backgroundImageId: Int?
+    let backgroundImage: SavedImage?
+    let base64Rendering: String?
 }
 
 struct MatrixTimer: Decodable {

@@ -1,6 +1,5 @@
 using Matrix.Data.Exceptions;
 using Matrix.Data.Models;
-using Matrix.Data.Models.Web;
 using Matrix.Data.Models.TimeValidation;
 using Matrix.Data.Types;
 using Matrix.Data.Utilities;
@@ -25,15 +24,26 @@ public class ClockFaceService
         bool render = false, 
         int scaleFactor = 1)
     {
+        var currentClockFaceId = MatrixMain.MatrixUpdater.CurrentClockFace?.Id ?? -1;
+        
         if (filter == SearchFilter.AllResults)
         {
-            return await _matrixContext.ClockFace
+            var allFaces = await _matrixContext.ClockFace
                 .Where(face => face.IsTimerFace == timerFace)
                 .Include(face => face.TimePeriods)
                 .Include(face => face.TextLines).ThenInclude(line => line.Color)
                 .Include(face => face.TextLines).ThenInclude(line => line.Font)
                 .Include(face => face.BackgroundImage)
                 .ToListAsync();
+            
+            var currentFace = allFaces.FirstOrDefault(face => face.Id == currentClockFaceId);
+
+            if (currentFace != null)
+            {
+                currentFace.IsCurrentFace = true;
+            }
+
+            return allFaces;
         }
         
         var searchForDeleted = filter == SearchFilter.Deleted;
@@ -53,6 +63,14 @@ public class ClockFaceService
                 face.Base64Rendering = MatrixRenderer.ImageToBase64(image, true);
             });
         }
+
+        clockFaces.ForEach(face =>
+        {
+            if (face.Id == currentClockFaceId)
+            {
+                face.IsCurrentFace = true;
+            }
+        });
 
         return clockFaces;
     }
@@ -75,6 +93,11 @@ public class ClockFaceService
         {
             var image = MatrixRenderer.RenderClockFace(clockFace, scaleFactor);
             clockFace.Base64Rendering = MatrixRenderer.ImageToBase64(image, true);
+        }
+
+        if (clockFace.Id == MatrixMain.MatrixUpdater.CurrentClockFace?.Id)
+        {
+            clockFace.IsCurrentFace = true;
         }
 
         return clockFace;

@@ -11,6 +11,8 @@ import SwiftyCrop
 import Combine
 
 struct ImageView: View {
+    private static let BUTTON_HEIGHT: CGFloat = CGFloat(50)
+    
     @State private var showImageCropper: Bool = false
     
     @State private var selectedItem: PhotosPickerItem? = nil
@@ -26,10 +28,14 @@ struct ImageView: View {
     
     let matrixInformation: MatrixInformation
     @ObservedObject var imagesController: ImagesController
+    @ObservedObject var appController: AppController
     
-    init(imagesController: ImagesController, matrixInformation: MatrixInformation) {
+    init(imagesController: ImagesController,
+         matrixInformation: MatrixInformation,
+         appController: AppController) {
         self.imagesController = imagesController
         self.matrixInformation = matrixInformation
+        self.appController = appController
     }
     
     var body: some View {
@@ -37,8 +43,8 @@ struct ImageView: View {
             Image(uiImage: (croppedImage ?? loadedImage ?? imagesController.awaitingContent))
                 .resizable()
                 .scaledToFit()
-                .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE),
-                       height: CGFloat(ContentView.IMAGE_VIEW_SIZE))
+                .frame(width: CGFloat(MatrixAppView.IMAGE_VIEW_SIZE),
+                       height: CGFloat(MatrixAppView.IMAGE_VIEW_SIZE))
                 .border(.gray)
             
             PhotosPicker(selection: $selectedItem, matching: .images) {
@@ -49,41 +55,38 @@ struct ImageView: View {
             HStack {
                 Button(action: {
                     Task {
-                        if (selectedSavedImage != nil && !selectionEdited) {
-                            await imagesController.setMatrixRenderingById(imageId: selectedSavedImage!.id)
-                        } else {
-                            await imagesController.postUIImage(image: croppedImage)
-                        }
+                        await sendToMatrix()
                     }
                 }) {
                     Text("Send to Matrix")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50)
+                .frame(maxWidth: .infinity, maxHeight: ImageView.BUTTON_HEIGHT)
                 .border(.gray)
+                .contentShape(Rectangle())
                 .padding(10)
                 
                 Button(action: {
-                    if (croppedImage != nil) {
-                        showImageNameDialog = true
+                    if (croppedImage == nil && loadedImage == nil && selectedImage == nil) {
+                        appController.displayToastMessage(message: "No image picked", color: .red)
+                        return
                     }
+                    
+                    showImageNameDialog = true
                 }) {
                     Text((selectedSavedImage != nil) ? "Update Image" : "Save Image")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50)
+                .frame(maxWidth: .infinity, maxHeight: ImageView.BUTTON_HEIGHT)
                 .border(.gray)
+                .contentShape(Rectangle())
                 .padding(10)
                 .alert("Enter Image Name", isPresented: $showImageNameDialog) {
                     TextField("", text: $imageName)
                     HStack {
                         Button("Submit", role: .cancel) { 
                             Task {
-                                if (selectedSavedImage != nil) {
-                                    await imagesController.updateUIImage(imageId: selectedSavedImage!.id, image: croppedImage ?? loadedImage, imageName: imageName)
-                                } else {
-                                    await imagesController.saveUIImage(image: croppedImage, imageName: imageName)
-                                }
-                                
-                                await requerySavedImages()
+                                await saveUpdateImage()
                             }
                         }
                         
@@ -103,13 +106,15 @@ struct ImageView: View {
                             .border(.gray)
                         Text(image.name)
                         
+                        Spacer()
+                        
                         if (selectedSavedImage == image) {
                             Image(systemName: "checkmark.circle.fill")
                         }
                     }
-                    .frame(height: 48)
+                    .frame(maxWidth: .infinity, maxHeight: ImageView.BUTTON_HEIGHT)
                     .contentShape(Rectangle())
-                    .simultaneousGesture(TapGesture().onEnded {
+                    .onTapGesture {
                         selectedSavedImage = (selectedSavedImage == image) ? nil : image
                         
                         loadedImage = (selectedSavedImage != nil)
@@ -122,13 +127,16 @@ struct ImageView: View {
                         if (selectedSavedImage != nil) {
                             selectionEdited = false
                         }
-                    })
+                    }
                 }
                 .onDelete { offsets in
                     let savedImage = imagesController.savedImages[offsets.first!]
                     
                     Task {
-                        await imagesController.deleteImageById(imageId: savedImage.id)
+                        await appController.executeRequestToToast(task: {
+                            await imagesController.deleteImageById(imageId: savedImage.id)
+                        }, successMessage: "Successfully deleted image", failureMessage: "Failed to delete image")
+                        
                         await requerySavedImages()
                     }
                 }
@@ -157,6 +165,35 @@ struct ImageView: View {
                 }
             }
         }
+    }
+    
+    private func sendToMatrix() async {
+        if (selectedImage == nil && croppedImage == nil) {
+            appController.displayToastMessage(message: "No image selected", color: .red)
+            return
+        }
+        
+        await appController.executeRequestToToast(task: {
+            if (selectedSavedImage != nil && !selectionEdited) {
+                await imagesController.setMatrixRenderingById(imageId: selectedSavedImage!.id)
+            } else {
+                await imagesController.postUIImage(image: croppedImage)
+            }
+        })
+    }
+    
+    private func saveUpdateImage() async {
+        if (selectedSavedImage != nil) {
+            await appController.executeRequestToToast(task: {
+                await imagesController.updateUIImage(imageId: selectedSavedImage!.id, image: croppedImage ?? loadedImage, imageName: imageName)
+            }, successMessage: "Successfully updated image", failureMessage: "Failed to update image")
+        } else {
+            await appController.executeRequestToToast(task: {
+                await imagesController.saveUIImage(image: croppedImage, imageName: imageName)
+            }, successMessage: "Successfully saved image", failureMessage: "Failed to save image")
+        }
+        
+        await requerySavedImages()
     }
     
     private func requerySavedImages() async {

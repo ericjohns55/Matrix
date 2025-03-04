@@ -11,10 +11,28 @@ import SwiftUI
 struct MatrixApp: App {
     static var ServerUrl = ""
     static var ApiKey = ""
-    
+        
+    @StateObject private var appController = AppController()
+    @StateObject private var matrixController = MatrixController()
+    @StateObject private var clockFaceController = ClockFaceController()
+    @StateObject private var textController = TextController()
+    @StateObject private var imagesController = ImagesController()
+        
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MatrixAppView()
+                .environmentObject(matrixController)
+                .environmentObject(clockFaceController)
+                .environmentObject(textController)
+                .environmentObject(imagesController)
+                .environmentObject(appController)
+                .onAppear() {
+                    Task {
+                        await textController.loadColors()
+                        await textController.loadFonts()
+                        await imagesController.loadSavedImages()
+                    }
+                }
         }
     }
 }

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		307BF8522D6AEC0500725BD5 /* SwiftyCrop in Frameworks */ = {isa = PBXBuildFile; productRef = 307BF8512D6AEC0500725BD5 /* SwiftyCrop */; };
 		309DDD252D49BF160086F71B /* AsyncHTTPClient in Frameworks */ = {isa = PBXBuildFile; productRef = 309DDD242D49BF160086F71B /* AsyncHTTPClient */; };
+		30AC1A842D755BC80009285D /* AlertToast in Frameworks */ = {isa = PBXBuildFile; productRef = 30AC1A832D755BC80009285D /* AlertToast */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				30AC1A842D755BC80009285D /* AlertToast in Frameworks */,
 				307BF8522D6AEC0500725BD5 /* SwiftyCrop in Frameworks */,
 				309DDD252D49BF160086F71B /* AsyncHTTPClient in Frameworks */,
 			);
@@ -142,6 +144,7 @@
 			packageProductDependencies = (
 				309DDD242D49BF160086F71B /* AsyncHTTPClient */,
 				307BF8512D6AEC0500725BD5 /* SwiftyCrop */,
+				30AC1A832D755BC80009285D /* AlertToast */,
 			);
 			productName = MatrixApp;
 			productReference = 309DDCF52D49BAE90086F71B /* Matrix  Controller.app */;
@@ -228,6 +231,7 @@
 			packageReferences = (
 				309DDD232D49BF160086F71B /* XCRemoteSwiftPackageReference "async-http-client" */,
 				307BF8502D6AEC0500725BD5 /* XCRemoteSwiftPackageReference "SwiftyCrop" */,
+				30AC1A822D755B230009285D /* XCRemoteSwiftPackageReference "AlertToast" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 309DDCF62D49BAE90086F71B /* Products */;
@@ -614,6 +618,14 @@
 				minimumVersion = 1.24.0;
 			};
 		};
+		30AC1A822D755B230009285D /* XCRemoteSwiftPackageReference "AlertToast" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/elai950/AlertToast.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.9;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -626,6 +638,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 309DDD232D49BF160086F71B /* XCRemoteSwiftPackageReference "async-http-client" */;
 			productName = AsyncHTTPClient;
+		};
+		30AC1A832D755BC80009285D /* AlertToast */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 30AC1A822D755B230009285D /* XCRemoteSwiftPackageReference "AlertToast" */;
+			productName = AlertToast;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

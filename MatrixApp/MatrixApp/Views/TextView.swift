@@ -12,6 +12,7 @@ enum TextType {
 }
 
 struct TextView: View {
+    private static let BUTTON_HEIGHT: CGFloat = CGFloat(50)
     private let ROW_SIZE = CGFloat(32)
     private let LIST_ROW_SIZE = CGFloat(48)
     private let PADDING = CGFloat(8)
@@ -45,13 +46,18 @@ struct TextView: View {
     @State private var selectionEdited: Bool = false
     
     @ObservedObject var textController: TextController
+    @ObservedObject var imagesController: ImagesController
+    @ObservedObject var appController: AppController
     let matrixInformation: MatrixInformation
-    let imagesController: ImagesController
     
-    init(matrixInformation: MatrixInformation?, textController: TextController, imagesController: ImagesController) {
+    init(matrixInformation: MatrixInformation?,
+         textController: TextController,
+         imagesController: ImagesController,
+         appController: AppController) {
         self.matrixInformation = matrixInformation ?? MatrixInformation(brightness: 50, width: 64, height: 32)
         self.textController = textController
         self.imagesController = imagesController
+        self.appController = appController
         
         self.selectedImage = imagesController.emptyImage
     }
@@ -62,8 +68,8 @@ struct TextView: View {
                 Image(uiImage: (renderedPreview ?? imagesController.awaitingContent))
                     .resizable()
                     .scaledToFit()
-                    .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE),
-                           height: CGFloat(ContentView.IMAGE_VIEW_SIZE))
+                    .frame(width: CGFloat(MatrixAppView.IMAGE_VIEW_SIZE),
+                           height: CGFloat(MatrixAppView.IMAGE_VIEW_SIZE))
                     .border(.gray)
             } else {
                 VStack(spacing: 4) {
@@ -72,8 +78,8 @@ struct TextView: View {
                         .scaledToFill()
                         .clipped()
                         .offset(x: CGFloat(currentOffset))
-                        .frame(width: CGFloat(ContentView.IMAGE_VIEW_SIZE),
-                               height: CGFloat(ContentView.IMAGE_VIEW_SIZE))
+                        .frame(width: CGFloat(MatrixAppView.IMAGE_VIEW_SIZE),
+                               height: CGFloat(MatrixAppView.IMAGE_VIEW_SIZE))
                         .clipped()
                         .border(.gray)
                         .onTapGesture { _ in
@@ -91,7 +97,7 @@ struct TextView: View {
                                 currentOffset -= pixelsPerFrame
                                 
                                 if (currentOffset <= -1 * offsetBounds) {
-                                    currentOffset = offsetBounds + Int(ContentView.IMAGE_VIEW_SIZE)
+                                    currentOffset = offsetBounds + Int(MatrixAppView.IMAGE_VIEW_SIZE)
                                 }
                             }
                         }
@@ -276,8 +282,10 @@ struct TextView: View {
                     }
                 }) {
                     Text("Send to Matrix")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50)
+                .frame(maxWidth: .infinity, maxHeight: TextView.BUTTON_HEIGHT)
+                .contentShape(Rectangle())
                 .border(.gray)
                 .padding(10)
                 
@@ -302,8 +310,10 @@ struct TextView: View {
                 }) {
                     Text(((selectedPlainText != nil && textType == .stationary)
                           || (selectedScrollingText != nil && textType == .scrolling)) ? "Update Text" : "Save Text")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50)
+                .frame(maxWidth: .infinity, maxHeight: TextView.BUTTON_HEIGHT)
+                .contentShape(Rectangle())
                 .border(.gray)
                 .padding(10)
             }
@@ -319,11 +329,13 @@ struct TextView: View {
                                 .border(.gray)
                             Text(plainTextPayload.text)
                             
+                            Spacer()
+                            
                             if (selectedPlainText == plainTextPayload) {
                                 Image(systemName: "checkmark.circle.fill")
                             }
                         }
-                        .frame(height: LIST_ROW_SIZE)
+                        .frame(maxWidth: .infinity, maxHeight: LIST_ROW_SIZE)
                         .contentShape(Rectangle())
                         .simultaneousGesture(TapGesture().onEnded {
                             selectedPlainText = (selectedPlainText == plainTextPayload) ? nil : plainTextPayload
@@ -342,12 +354,18 @@ struct TextView: View {
                         let plainText = textController.savedPlainText[offsets.first!]
                         
                         Task {
-                            await textController.deletePlainText(plainTextId: plainText.id)
+                            await appController.executeRequestToToast(task: {
+                                await textController.deletePlainText(plainTextId: plainText.id)
+                            }, successMessage: "Successfully deleted stationary text", failureMessage: "Failed to delete stationary text")
+                            
                             await requerySavedPlainText()
                         }
                     }
                 }
                 .refreshable {
+                    await textController.loadSavedPlainTexts()
+                }
+                .task {
                     await textController.loadSavedPlainTexts()
                 }
             } else {
@@ -361,11 +379,13 @@ struct TextView: View {
                                 .border(.gray)
                             Text(scrollingTextPayload.text)
                             
+                            Spacer()
+                            
                             if (selectedScrollingText == scrollingTextPayload) {
                                 Image(systemName: "checkmark.circle.fill")
                             }
                         }
-                        .frame(height: LIST_ROW_SIZE)
+                        .frame(maxWidth: .infinity, maxHeight: LIST_ROW_SIZE)
                         .contentShape(Rectangle())
                         .simultaneousGesture(TapGesture().onEnded {
                             selectedScrollingText = (selectedScrollingText == scrollingTextPayload) ? nil : scrollingTextPayload
@@ -384,12 +404,18 @@ struct TextView: View {
                         let scrollingText = textController.savedScrollingText[offsets.first!]
                             
                         Task {
-                            await textController.deleteScrollingText(scrollingTextId: scrollingText.id)
+                            await appController.executeRequestToToast(task: {
+                                await textController.deleteScrollingText(scrollingTextId: scrollingText.id)
+                            }, successMessage: "Successfully deleted scrolling text", failureMessage: "Failed to delete scrolling text")
+                            
                             await requerySavedScrollingText()
                         }
                     }
                 }
                 .refreshable {
+                    await textController.loadSavedScrollingTexts()
+                }
+                .task {
                     await textController.loadSavedScrollingTexts()
                 }
             }
@@ -509,25 +535,27 @@ struct TextView: View {
     private func tryPostText() async {
         let backgroundImageId = optionallyParseBackgroundImage()
         
-        if (textType == .stationary) {
-            await textController.tryPostText(
-                text: text,
-                color: selectedColor,
-                font: selectedFont,
-                alignment: alignment,
-                verticalPositioning: positioning,
-                splitByWord: splitByWord,
-                backgroundImageId: backgroundImageId)
-        } else {
-            await textController.tryPostScrollingText(
-                text: text,
-                verticalPositioning: positioning,
-                scrollingInterval: scrollInterval,
-                iterations: iterations,
-                color: selectedColor,
-                font: selectedFont,
-                backgroundImageId: backgroundImageId)
-        }
+        await appController.executeRequestToToast(task: {
+            if (textType == .stationary) {
+                try await textController.tryPostText(
+                    text: text,
+                    color: selectedColor,
+                    font: selectedFont,
+                    alignment: alignment,
+                    verticalPositioning: positioning,
+                    splitByWord: splitByWord,
+                    backgroundImageId: backgroundImageId)
+            } else {
+                try await textController.tryPostScrollingText(
+                    text: text,
+                    verticalPositioning: positioning,
+                    scrollingInterval: scrollInterval,
+                    iterations: iterations,
+                    color: selectedColor,
+                    font: selectedFont,
+                    backgroundImageId: backgroundImageId)
+            }
+        }, failureMessage: "Text is invalid")
     }
     
     private func saveOrUpdateText(textId: Int = 0) async {
@@ -544,10 +572,16 @@ struct TextView: View {
             
             if (payload != nil) {
                 if (selectionEdited) {
-                    await textController.saveOrUpdatePlainText(plainText: payload!, update: true, plainTextId: textId)
+                    await appController.executeRequestToToast(task: {
+                        await textController.saveOrUpdatePlainText(plainText: payload!, update: true, plainTextId: textId)
+                    }, successMessage: "Successfully updated text", failureMessage: "Failed to update text")
                 } else {
-                    await textController.saveOrUpdatePlainText(plainText: payload!)
+                    await appController.executeRequestToToast(task: {
+                        await textController.saveOrUpdatePlainText(plainText: payload!)
+                    }, successMessage: "Successfully saved text", failureMessage: "Failed to saved text")
                 }
+            } else {
+                appController.displayToastMessage(message: "Text parameters are invalid", color: .red)
             }
         } else {
             let payload = textController.validateScrollingText(
@@ -562,10 +596,16 @@ struct TextView: View {
             
             if (payload != nil) {
                 if (selectionEdited) {
-                    await textController.saveOrUpdateScrollingText(scrollingText: payload!, update: true, scrollingTextId: textId)
+                    await appController.executeRequestToToast(task: {
+                        await textController.saveOrUpdateScrollingText(scrollingText: payload!, update: true, scrollingTextId: textId)
+                    }, successMessage: "Successfully updated text", failureMessage: "Failed to update text")
                 } else {
-                    await textController.saveOrUpdateScrollingText(scrollingText: payload!)
+                    await appController.executeRequestToToast(task: {
+                        await textController.saveOrUpdateScrollingText(scrollingText: payload!)
+                    }, successMessage: "Successfully saved text", failureMessage: "Failed to save text")
                 }
+            } else {
+                appController.displayToastMessage(message: "Text parameters are invalid", color: .red)
             }
         }
     }
