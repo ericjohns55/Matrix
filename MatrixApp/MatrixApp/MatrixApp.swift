@@ -17,15 +17,17 @@ struct MatrixApp: App {
     @StateObject private var clockFaceController = ClockFaceController()
     @StateObject private var textController = TextController()
     @StateObject private var imagesController = ImagesController()
-        
+    @StateObject private var timerController = TimerController()
+    
     var body: some Scene {
         WindowGroup {
             MatrixAppView()
+                .environmentObject(appController)
                 .environmentObject(matrixController)
                 .environmentObject(clockFaceController)
                 .environmentObject(textController)
                 .environmentObject(imagesController)
-                .environmentObject(appController)
+                .environmentObject(timerController)
                 .onAppear() {
                     Task {
                         await textController.loadColors()

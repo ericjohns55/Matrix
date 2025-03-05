@@ -22,7 +22,7 @@ struct MatrixFont: Identifiable, Decodable, Hashable {
     let height: Int
 }
 
-struct TextLine: Identifiable, Decodable {
+struct TextLine: Identifiable, Decodable, Hashable {
     let id: Int
     let text: String
     let xLocation: Int
@@ -36,7 +36,7 @@ struct TextLine: Identifiable, Decodable {
     let clockFaceId: Int
 }
 
-struct TimePeriod: Identifiable, Decodable {
+struct TimePeriod: Identifiable, Decodable, Hashable {
     let id: Int
     let clockFaceId: Int
     let startHour: Int
@@ -48,7 +48,7 @@ struct TimePeriod: Identifiable, Decodable {
     let daysOfWeek: [String]
 }
 
-struct ClockFace: Identifiable, Decodable {
+struct ClockFace: Identifiable, Decodable, Hashable {
     let id: Int
     let name: String
     let textLines: [TextLine]
@@ -60,6 +60,14 @@ struct ClockFace: Identifiable, Decodable {
     let backgroundImageId: Int?
     let backgroundImage: SavedImage?
     let base64Rendering: String?
+}
+
+struct TimerCodable: Codable {
+    let hour: Int
+    let minute: Int
+    let second: Int
+    let timerFaceId: Int
+    let isStopwatch: Bool
 }
 
 struct MatrixTimer: Decodable {

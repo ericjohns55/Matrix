@@ -10,7 +10,7 @@ import SwiftUI
 import UIKit
 
 @MainActor
-class ClockFaceController: BaseController {
+class ClockFaceController: ObservableObject {
     @Published var clockFaces: [ClockFace] = []
     @Published var overridenClockFace: ClockFace? = nil
     

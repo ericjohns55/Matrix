@@ -27,7 +27,7 @@ struct ProgramOverview: Decodable {
 }
 
 @MainActor
-class MatrixController: BaseController {
+class MatrixController: ObservableObject {
     @Published var programOverview: ProgramOverview = ProgramOverview(matrixState: "Unknown", matrixInformation: MatrixInformation(brightness: -1, width: -1, height: -1), updateInterval: -1, currentVariables: nil, timer: nil, plainText: nil, scrollingText: nil, currentClockFace: nil, overridenClockFace: nil)
     
     func getProgramOverview() async {

@@ -20,6 +20,7 @@ struct MatrixAppView: View {
     @EnvironmentObject var clockFaceController: ClockFaceController
     @EnvironmentObject var textController: TextController
     @EnvironmentObject var imagesController: ImagesController
+    @EnvironmentObject var timerController: TimerController
     @EnvironmentObject var appController: AppController
     
     @State private var selectedTab: AppPage = .overview
@@ -86,7 +87,10 @@ struct MatrixAppView: View {
             
             
             VStack {
-                
+                TimerView(matrixController: matrixController,
+                          timerController: timerController,
+                          imagesController: imagesController,
+                          appController: appController)
             }
             .tabItem {
                 Label("Timers", systemImage: "timer")

@@ -15,7 +15,7 @@ struct ImagePayload: Codable {
 }
 
 @MainActor
-class ImagesController: BaseController {
+class ImagesController: ObservableObject {
     @Published var matrixRendering: UIImage?
     
     @Published var awaitingContent: UIImage
@@ -29,7 +29,7 @@ class ImagesController: BaseController {
     
     public var emptyImage: SavedImage = SavedImage(id: -1, name: "(None)", fileName: "none.png")
         
-    override init() {
+    init() {
         let emptyImage = ImagesController.createEmptyImage()
         
         self.loading = ImagesController.loadImageFromAssetsOrDefault(assetName: "Loading", emptyImage: emptyImage)

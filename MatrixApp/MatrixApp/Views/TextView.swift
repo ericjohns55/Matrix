@@ -341,7 +341,7 @@ struct TextView: View {
                             selectedPlainText = (selectedPlainText == plainTextPayload) ? nil : plainTextPayload
                             selectionEdited = false
                             
-                            if (selectedPlainText != nil) {
+                            if (selectedPlainText != nil) { // TODO: ensure preview updater does not run for each line here
                                 text = plainTextPayload.text
                                 alignment = plainTextPayload.textAlignment
                                 positioning = plainTextPayload.verticalPositioning
