@@ -74,6 +74,7 @@ struct MatrixTimer: Decodable {
     let hour: Int
     let minute: Int
     let second: Int
+    let isStopwatch: Bool
     let state: String
 }
 

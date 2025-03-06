@@ -25,6 +25,14 @@ public class TimerController : MatrixBaseController
         _clockFaceService = clockFaceService;
     }
 
+    [HttpGet]
+    [Route("current")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixTimer?>))]
+    public IActionResult GetCurrentTimer()
+    {
+        return Ok(ExecuteToMatrixResponse(() => ProgramState.Timer));
+    }
+
     [HttpPost]
     [Route("create")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<MatrixTimer>))]

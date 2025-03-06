@@ -17,6 +17,8 @@ class TimerController: ObservableObject {
     @Published var selectedTimerFace: ClockFace? = nil
     @Published var rendering: UIImage? = nil
     
+    @Published var isRunning: Bool = false
+    
     func loadTimerClockFaces() async {
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
         
@@ -29,25 +31,26 @@ class TimerController: ObservableObject {
         self.selectedTimerFace = self.timerClockFaces.first
     }
     
+    func loadCurrentTimer() async {
+        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
+            
+        guard let matrixResponse: MatrixResponse<MatrixTimer> = try? await client.GetRequest(route: "timer/current") else {
+            return
+        }
+            
+        self.lastKnownTimer = matrixResponse.data
+        self.updateRunningStatus()
+    }
+    
     func createTimer(timer: TimerCodable) async {
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
         
-        guard let matrixResponse: MatrixResponse<MatrixTimer> = try? await client.PostRequest(route: "timer/create?alsoStart=true", body: timer) else {
+        guard let matrixResponse: MatrixResponse<MatrixTimer> = try? await client.PostRequest(route: "timer/create", body: timer) else {
             return
         }
         
         self.lastKnownTimer = matrixResponse.data
-    }
-    
-    func updateTimerState() async {
-        let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
-            
-        guard let matrixResponse: MatrixResponse<String> = try? await client.GetRequest(route: "timer/state") else {
-            lastKnownState = "Unknown"
-            return
-        }
-            
-        lastKnownState = matrixResponse.data
+        self.updateRunningStatus()
     }
     
     func renderTimer(timer: TimerCodable) async {
@@ -58,6 +61,10 @@ class TimerController: ObservableObject {
         }
         
         self.rendering = image
+    }
+    
+    func startTimer() async {
+        return await modifyTimerState(route: "timer/start")
     }
     
     func stopTimer() async {
@@ -76,6 +83,10 @@ class TimerController: ObservableObject {
         return await modifyTimerState(route: "timer/reset")
     }
     
+    private func updateRunningStatus() {
+        self.isRunning = ["Running", "Blinking"].contains(self.lastKnownTimer?.state)
+    }
+    
     private func modifyTimerState(route: String) async {
         let client = MatrixClient(serverUrl: MatrixApp.ServerUrl, apiKey: MatrixApp.ApiKey)
             
@@ -84,5 +95,6 @@ class TimerController: ObservableObject {
         }
             
         self.lastKnownTimer = matrixResponse.data
+        self.updateRunningStatus()
     }
 }

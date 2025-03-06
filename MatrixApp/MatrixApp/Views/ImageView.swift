@@ -168,7 +168,7 @@ struct ImageView: View {
     }
     
     private func sendToMatrix() async {
-        if (selectedImage == nil && croppedImage == nil) {
+        if (selectedSavedImage == nil && croppedImage == nil) {
             appController.displayToastMessage(message: "No image selected", color: .red)
             return
         }

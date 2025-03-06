@@ -154,35 +154,6 @@ struct TextView: View {
                 Text("Vertical Positioning")
             }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
             
-            if (textType == .stationary) {
-                LabeledContent {
-                    Picker("Text Alignment", selection: $alignment) {
-                        Text("Left").tag("Left")
-                        Text("Center").tag("Center")
-                        Text("Right").tag("Right")
-                    }
-                    .onChange(of: alignment) {
-                        Task {
-                            await optionallyUpdateTextPreview()
-                        }
-                    }
-                } label: {
-                    Text("Text Orientation")
-                }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
-            } else {
-                LabeledContent {
-                    TextField("(number of repetitions)", value: $iterations, format: .number)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .onSubmit {
-                            Task {
-                                await optionallyUpdateTextPreview()
-                            }
-                        }
-                } label: {
-                    Text("Iterations")
-                }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
-            }
             
             LabeledContent {
                 Picker("Color", selection: $selectedColor) {
@@ -226,34 +197,6 @@ struct TextView: View {
                 Text("Font")
             }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
             
-            if (textType == .stationary) {
-                LabeledContent {
-                    Toggle(isOn: $splitByWord) {
-                        EmptyView()
-                    }
-                    .toggleStyle(SwitchToggleStyle(tint: .blue))
-                    .onChange(of: splitByWord) {
-                        Task {
-                            await optionallyUpdateTextPreview()
-                        }
-                    }
-                } label: {
-                    Text("Split by Word")
-                }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
-            } else {
-                LabeledContent {
-                    TextField("(interval in milliseconds)", value: $scrollInterval, format: .number)
-                        .multilineTextAlignment(.trailing)
-                        .onSubmit {
-                            Task {
-                                await optionallyUpdateTextPreview()
-                            }
-                        }
-                } label: {
-                    Text("Scroll Interval (ms)")
-                }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
-            }
-                        
             LabeledContent {
                 Picker("Background Image", selection: $selectedImage) {
                     ForEach(imagesController.savedImagesWithNone) { savedImage in
@@ -274,7 +217,64 @@ struct TextView: View {
             } label: {
                 Text("Background Image")
             }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
-                        
+            
+            if (textType == .stationary) {
+                LabeledContent {
+                    Picker("Text Alignment", selection: $alignment) {
+                        Text("Left").tag("Left")
+                        Text("Center").tag("Center")
+                        Text("Right").tag("Right")
+                    }
+                    .onChange(of: alignment) {
+                        Task {
+                            await optionallyUpdateTextPreview()
+                        }
+                    }
+                } label: {
+                    Text("Text Orientation")
+                }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
+                
+                LabeledContent {
+                    Toggle(isOn: $splitByWord) {
+                        EmptyView()
+                    }
+                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    .onChange(of: splitByWord) {
+                        Task {
+                            await optionallyUpdateTextPreview()
+                        }
+                    }
+                } label: {
+                    Text("Split by Word")
+                }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
+            } else {
+                LabeledContent {
+                    TextField("(number of repetitions)", value: $iterations, format: .number)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .onSubmit {
+                            Task {
+                                await optionallyUpdateTextPreview()
+                            }
+                        }
+                } label: {
+                    Text("Iterations")
+                }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
+                
+                
+                LabeledContent {
+                    TextField("(interval in milliseconds)", value: $scrollInterval, format: .number)
+                        .multilineTextAlignment(.trailing)
+                        .onSubmit {
+                            Task {
+                                await optionallyUpdateTextPreview()
+                            }
+                        }
+                } label: {
+                    Text("Scroll Interval (ms)")
+                }.frame(minHeight: ROW_SIZE, maxHeight: ROW_SIZE).padding(PADDING)
+            }
+            
             HStack {
                 Button(action: {
                     Task {

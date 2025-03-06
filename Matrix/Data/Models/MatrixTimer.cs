@@ -17,7 +17,7 @@ public class MatrixTimer
     public int Minute { get; private set; }
     public int Second { get; private set; }
 
-    private bool IsStopwatch { get; }
+    public bool IsStopwatch { get; }
 
     public TimerState State { get; private set; }
     

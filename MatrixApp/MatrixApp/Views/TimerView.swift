@@ -44,19 +44,24 @@ struct TimerView: View {
                 .border(.gray)
                 .task {
                     await timerController.loadTimerClockFaces()
-                }
-            
-            Text("Current Timer Status: \(timerController.lastKnownState ?? timerController.lastKnownTimer?.state ?? matrixController.programOverview.timer?.state ?? "None Exists")")
-                .task {
-                    await timerController.updateTimerState()
+                    await optionallyLoadTimerFromMatrix()
                 }
         }.padding(.bottom, 10)
         
         HStack {
             Button(action: {
-                // start
+                if (timerType == .timer && selectedHour == 0 && selectedMinute == 0 && selectedSecond == 0) {
+                    appController.displayToastMessage(message: "Invalid time frame for timer", color: .red)
+                    return
+                }
+                
+                Task {
+                    await appController.executeRequestToToast(task: {
+                        await timerController.createTimer(timer: createTimerPayload())
+                    }, successMessage: "Successfully created timer", failureMessage: "Failed to create timer")
+                }
             }) {
-                Image(systemName: "play.circle")
+                Image(systemName: "arrowtriangle.up.circle")
                     .resizable()
                     .renderingMode(.original)
                     .scaledToFit()
@@ -65,9 +70,30 @@ struct TimerView: View {
             
             
             Button(action: {
-                // pause/resume
+                if (timerController.lastKnownTimer == nil) {
+                    appController.displayToastMessage(message: "No timer currently exists", color: .red)
+                    return
+                }
+                
+                Task {
+                    if (!timerController.isRunning) {
+                        if (timerController.lastKnownTimer?.state == "Waiting") {
+                            await appController.executeRequestToToast(task: {
+                                await timerController.startTimer()
+                            }, successMessage: "Started timer", failureMessage: "Could not start timer")
+                        } else {
+                            await appController.executeRequestToToast(task: {
+                                await timerController.resumeTimer()
+                            }, successMessage: "Resumed timer", failureMessage: "Could not resume timer")
+                        }
+                    } else {
+                        await appController.executeRequestToToast(task: {
+                            await timerController.pauseTimer()
+                        }, successMessage: "Paused timer", failureMessage: "Could not pause timer")
+                    }
+                }
             }) {
-                Image(systemName: "pause.circle")
+                Image(systemName: (timerController.isRunning ? "pause.circle" : "play.circle"))
                     .resizable()
                     .renderingMode(.original)
                     .scaledToFit()
@@ -76,7 +102,16 @@ struct TimerView: View {
             
             
             Button(action: {
-                // stop
+                if (timerController.lastKnownTimer == nil) {
+                    appController.displayToastMessage(message: "No timer currently exists", color: .red)
+                    return
+                }
+                
+                Task {
+                    await appController.executeRequestToToast(task: {
+                        await timerController.stopTimer()
+                    }, successMessage: "Successfully cancelled timer", failureMessage: "Could not stop timer")
+                }
             }) {
                 Image(systemName: "stop.circle")
                     .resizable()
@@ -85,16 +120,26 @@ struct TimerView: View {
                     .frame(width: TimerView.BUTTON_SIZE, height: TimerView.BUTTON_SIZE)
             }.padding(.horizontal, 10)
             
-            
-            Button(action: {
-                // restart
-            }) {
-                Image(systemName: "arrow.counterclockwise.circle")
-                    .resizable()
-                    .renderingMode(.original)
-                    .scaledToFit()
-                    .frame(width: TimerView.BUTTON_SIZE, height: TimerView.BUTTON_SIZE)
-            }.padding(.horizontal, 10)
+            if (timerType == .stopwatch || timerController.lastKnownTimer?.isStopwatch ?? false) {
+                Button(action: {
+                    if (timerController.lastKnownTimer == nil) {
+                        appController.displayToastMessage(message: "No timer currently exists", color: .red)
+                        return
+                    }
+                    
+                    Task {
+                        await appController.executeRequestToToast(task: {
+                            await timerController.resetStopwatch()
+                        }, successMessage: "Successfully reset stopwatch", failureMessage: "Could not reset stopwatch")
+                    }
+                }) {
+                    Image(systemName: "arrow.counterclockwise.circle")
+                        .resizable()
+                        .renderingMode(.original)
+                        .scaledToFit()
+                        .frame(width: TimerView.BUTTON_SIZE, height: TimerView.BUTTON_SIZE)
+                }.padding(.horizontal, 10)
+            }
         }.padding(.bottom, 10)
         
         Picker("Timer Type", selection: $timerType) {
@@ -170,6 +215,30 @@ struct TimerView: View {
             return
         }
         
+        await timerController.renderTimer(timer: createTimerPayload())
+    }
+    
+    private func optionallyLoadTimerFromMatrix() async {
+        if (matrixController.programOverview.matrixState != "Timer") {
+            return
+        }
+        
+        await timerController.loadCurrentTimer()
+        
+        if (timerController.lastKnownTimer != nil) {
+            timerType = timerController.lastKnownTimer!.isStopwatch ? .stopwatch : .timer
+            
+            if (timerType == .timer) {
+                selectedHour = timerController.lastKnownTimer!.hour
+                selectedMinute = timerController.lastKnownTimer!.minute
+                selectedSecond = timerController.lastKnownTimer!.second
+            }
+            
+            timerController.rendering = imagesController.matrixRendering
+        }
+    }
+    
+    private func createTimerPayload() -> TimerCodable {
         var timerPayload: TimerCodable
         
         if (timerType == .timer) {
@@ -188,6 +257,6 @@ struct TimerView: View {
                 isStopwatch: true)
         }
         
-        await timerController.renderTimer(timer: timerPayload)
+        return timerPayload
     }
 }
