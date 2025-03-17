@@ -16,6 +16,7 @@ namespace Matrix.Display;
 public class MatrixUpdater : IDisposable
 {
     public static ClockFace? OverridenClockFace { get; set; }
+    public static bool ResetOverridenFaceOnTimedFaceChange { get; set; } = false;
 
     public static int MatrixWidth = 0;
     public static int MatrixHeight = 0;
@@ -135,6 +136,7 @@ public class MatrixUpdater : IDisposable
                 if (now.Second == 50)
                 {
                     var nextMinute = DateTime.Now.AddMinutes(1);
+                    int currentFaceId = CurrentClockFace?.Id ?? -1;
                 
                     CurrentClockFace = MatrixClient.GetClockFaceForTime(new TimePayload()
                     {
@@ -142,6 +144,15 @@ public class MatrixUpdater : IDisposable
                         Minute = nextMinute.Minute,
                         DayOfWeek = now.DayOfWeek
                     }).WaitForCompletion();
+
+                    if (OverridenClockFace != null
+                        && ResetOverridenFaceOnTimedFaceChange
+                        && currentFaceId != CurrentClockFace?.Id)
+                    {
+                        ProgramState.OverrideClockFace = false;
+                        ResetOverridenFaceOnTimedFaceChange = false;
+                        OverridenClockFace = null;
+                    }
 
                     // weather updates happen simultaneously with clock face updates
                     _lastServerUpdateTime = now;

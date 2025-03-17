@@ -50,11 +50,12 @@ public class ClockFaceController : MatrixBaseController
 
     [HttpPost("override/{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MatrixResponse<ClockFace>))]
-    public async Task<IActionResult> OverrideClockFace(int id, bool render = false, int scaleFactor = 1)
+    public async Task<IActionResult> OverrideClockFace(int id, bool resetWhenCurrentFaceEnds = false, bool render = false, int scaleFactor = 1)
     {
         return Ok(await ExecuteToMatrixResponseAsync(async () =>
         {
             MatrixUpdater.OverridenClockFace = await _clockFaceService.GetClockFace(id, render, scaleFactor);
+            MatrixUpdater.ResetOverridenFaceOnTimedFaceChange = resetWhenCurrentFaceEnds;
 
             ProgramState.OverrideClockFace = true;
             ProgramState.UpdateNextTick = true;

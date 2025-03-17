@@ -108,8 +108,7 @@ public class TextController : MatrixBaseController
         {
             await _textService.LoadScrollingTextDependencies(scrollingTextPayload);
 
-            var temp = PostScrollingTextState(scrollingTextPayload);
-            return temp;
+            return PostScrollingTextState(scrollingTextPayload);
         }));
     }
 
