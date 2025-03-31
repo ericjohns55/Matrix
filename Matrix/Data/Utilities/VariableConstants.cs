@@ -2,7 +2,7 @@ namespace Matrix.Data.Utilities;
 
 public class VariableConstants
 {
-    public static readonly string ThunderKey = "Thunder";
+    public static readonly string ThunderKey = "Thunderstorm";
     public static readonly string ThunderReplace = "T-Storms";
     
     public static readonly string HourVariable = "{hour}";
