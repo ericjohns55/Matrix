@@ -10,8 +10,7 @@ public static class MatrixServer
 {
     public static async Task<WebApplication> CreateWebServer(string[] args, IConfigurationRoot configuration, string? fontsPath = null)
     {
-        string dataFolderPath = Path.Combine(Environment.CurrentDirectory, "Data");
-        string databasePath = Path.Combine(dataFolderPath, "matrix.db");
+        string databasePath = Path.Combine(MatrixMain.DataFolderPath, "matrix.db");
         if (!string.IsNullOrWhiteSpace(configuration[ConfigConstants.DatabasePath]))
         {
             databasePath = configuration[ConfigConstants.DatabasePath]!;
@@ -61,13 +60,13 @@ public static class MatrixServer
             MatrixSeeder? seeder = null;
             if (configuration.GetValue<bool>(ConfigConstants.RunSeedOnStart))
             {
-                seeder = new MatrixSeeder(context, dataFolderPath);
+                seeder = new MatrixSeeder(context, MatrixMain.DataFolderPath);
                 await seeder.Seed(configuration.GetValue<bool>(ConfigConstants.SeedDrop), fontsPath);
             }
 
             if (seeder == null && args.Contains("--rebuild-fonts")) // SeedFonts is called within the seeder already if it was already ran
             {
-                seeder = new MatrixSeeder(context, dataFolderPath);
+                seeder = new MatrixSeeder(context, MatrixMain.DataFolderPath);
                 await seeder.SeedFonts(fontsPath);
             }
         }

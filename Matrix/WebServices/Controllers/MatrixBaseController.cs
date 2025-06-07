@@ -30,7 +30,7 @@ public class MatrixBaseController : Controller
 
         return func.Invoke().OnSuccess(result =>
         {
-            stopwatch.Start();
+            stopwatch.Stop();
 
             return new MatrixResponse<T>()
             {
@@ -46,7 +46,7 @@ public class MatrixBaseController : Controller
 
         return func.Invoke().OnSuccess(result =>
         {
-            stopwatch.Start();
+            stopwatch.Stop();
 
             return new MatrixListResponse<T>()
             {
