@@ -129,33 +129,49 @@ public class MatrixUpdater : IDisposable
                 if ((now.Minute + 1) % 5 == 0 && now.Second == 50)
                 {
                     Console.WriteLine("Updating weather");
-                    ProgramState.Weather = WeatherClient?.GetWeather().WaitForCompletion() ?? WeatherModel.Empty;
+
+                    try
+                    {
+                        ProgramState.Weather = WeatherClient?.GetWeather().WaitForCompletion();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Could not get weather:\n" + ex);
+                        ProgramState.Weather = WeatherModel.Empty;
+                    }
                 }
 
                 // update clock face 10 seconds before each minute ends
                 if (now.Second == 50)
                 {
-                    var nextMinute = DateTime.Now.AddMinutes(1);
-                    int currentFaceId = CurrentClockFace?.Id ?? -1;
+                    try
+                    {
+                        var nextMinute = DateTime.Now.AddMinutes(1);
+                        int currentFaceId = CurrentClockFace?.Id ?? -1;
                 
-                    CurrentClockFace = MatrixClient.GetClockFaceForTime(new TimePayload()
-                    {
-                        Hour = nextMinute.Hour,
-                        Minute = nextMinute.Minute,
-                        DayOfWeek = now.DayOfWeek
-                    }).WaitForCompletion();
+                        CurrentClockFace = MatrixClient.GetClockFaceForTime(new TimePayload()
+                        {
+                            Hour = nextMinute.Hour,
+                            Minute = nextMinute.Minute,
+                            DayOfWeek = now.DayOfWeek
+                        }).WaitForCompletion();
 
-                    if (OverridenClockFace != null
-                        && ResetOverridenFaceOnTimedFaceChange
-                        && currentFaceId != CurrentClockFace?.Id)
-                    {
-                        ProgramState.OverrideClockFace = false;
-                        ResetOverridenFaceOnTimedFaceChange = false;
-                        OverridenClockFace = null;
+                        if (OverridenClockFace != null
+                            && ResetOverridenFaceOnTimedFaceChange
+                            && currentFaceId != CurrentClockFace?.Id)
+                        {
+                            ProgramState.OverrideClockFace = false;
+                            ResetOverridenFaceOnTimedFaceChange = false;
+                            OverridenClockFace = null;
+                        }
+
+                        // weather updates happen simultaneously with clock face updates
+                        _lastServerUpdateTime = now;
                     }
-
-                    // weather updates happen simultaneously with clock face updates
-                    _lastServerUpdateTime = now;
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Failed to read new clock face:\n" + ex);
+                    }
                 }
             }
         }
