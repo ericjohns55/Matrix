@@ -1,3 +1,4 @@
+using Matrix.Data;
 using Matrix.Data.Models.Web;
 using Matrix.Data.Utilities;
 using Matrix.Utilities;
@@ -34,7 +35,7 @@ public class WeatherClient : WebClient
                         WindSpeed = FromFloatOrEmpty(weatherObject["current"]?["wind_speed"], 1),
                         Humidity = FromFloatOrEmpty(weatherObject["current"]?["humidity"])
                     };
-                }, (_) => WeatherModel.Empty));
+                }, (_) => ProgramState.Weather ?? WeatherModel.Empty));
     }
 
     private string FromStringOrEmpty(JToken? token, bool remapTStorms = false)
